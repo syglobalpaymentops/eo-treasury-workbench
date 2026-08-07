@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PSP 支付指令生成器</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #667085;
+      --line: #d7dde5;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --soft: #e7f3f1;
+      --warn: #a34712;
+      --good: #166534;
+      --field: #fbfcfd;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+    }
+
+    main {
+      width: min(1240px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(25px, 4vw, 38px);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.8fr) minmax(0, 1.2fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(31, 41, 55, 0.07);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 15px 17px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .status {
+      min-height: 21px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .status.warn {
+      color: var(--warn);
+    }
+
+    .status.good {
+      color: var(--good);
+    }
+
+    .controls {
+      display: grid;
+      gap: 13px;
+      padding: 17px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      background: var(--field);
+      font: 15px/1.45 "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      outline: 0;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #a7afb9;
+      opacity: 1;
+    }
+
+    input.missing {
+      border-color: #d97706;
+      background: #fff8e7;
+    }
+
+    input.missing::placeholder {
+      color: #b45309;
+    }
+
+    input,
+    select {
+      min-height: 42px;
+      padding: 9px 11px;
+    }
+
+    textarea {
+      min-height: 255px;
+      padding: 13px;
+      resize: vertical;
+      font-family: Consolas, "Microsoft YaHei", monospace;
+      line-height: 1.7;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--soft);
+    }
+
+    .type-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
+    }
+
+    .template-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .template-option {
+      min-height: 42px;
+      text-align: left;
+      background: #ffffff;
+    }
+
+    .template-option.active {
+      border-color: var(--accent);
+      background: var(--soft);
+      color: var(--accent-dark);
+    }
+
+    .template-select {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 17px 17px;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    .primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .primary:hover {
+      background: var(--accent-dark);
+      color: #ffffff;
+    }
+
+    button:disabled,
+    button:disabled:hover {
+      border-color: #d7dde5;
+      background: #e5e7eb;
+      color: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .clear-button {
+      border-color: #c2410c;
+      color: #9a3412;
+      background: #fff7ed;
+    }
+
+    .clear-button:hover {
+      border-color: #9a3412;
+      color: #7c2d12;
+      background: #ffedd5;
+    }
+
+    .output {
+      margin: 0 17px 17px;
+      min-height: 246px;
+      padding: 15px;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      font: 16px/1.85 Consolas, "Microsoft YaHei", monospace;
+    }
+
+    .compact {
+      margin-top: -3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        width: min(100% - 20px, 720px);
+        padding: 20px 0;
+      }
+
+      header,
+      .workspace,
+      .grid,
+      .type-row {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>PSP 支付指令生成器</h1>
+        <p class="subtitle">选择指令类型，粘贴水单文字，自动整理成可复制文案。</p>
+      </div>
+      <div class="status" id="status">等待输入</div>
+    </header>
+
+    <section class="workspace" aria-label="PSP 支付指令工作区">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>输入</h2>
+        </div>
+        <div class="controls">
+          <div class="type-row">
+            <label>指令类型
+              <select class="template-select" id="instructionType" tabindex="-1">
+                <option value="samePersonal">收款人和付款人同名（个人户）</option>
+                <option value="sameCompany">收款人和付款人同名（公司户）</option>
+                <option value="companyToPersonal">公司付个人（异名）</option>
+                <option value="personalToCompany">个人付公司</option>
+                <option value="companyToCompany">公司付公司（异名）</option>
+              </select>
+              <span class="template-options" aria-label="指令类型">
+                <button class="template-option active" type="button" data-type="samePersonal">收款人和付款人同名（个人户）</button>
+                <button class="template-option" type="button" data-type="sameCompany">收款人和付款人同名（公司户）</button>
+                <button class="template-option" type="button" data-type="companyToPersonal">公司付个人（异名）</button>
+                <button class="template-option" type="button" data-type="personalToCompany">个人付公司</button>
+                <button class="template-option" type="button" data-type="companyToCompany">公司付公司（异名）</button>
+              </span>
+            </label>
+          </div>
+
+          <label>粘贴水单文字
+            <textarea id="sourceText" placeholder="将水单文字粘贴到这里"></textarea>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="primary" id="parseBtn" type="button">识别并填入字段</button>
+          <button class="clear-button" id="clearBtn" type="button">一键清除</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>字段与文案</h2>
+          <button class="primary" id="copyBtn" type="button">复制文案</button>
+        </div>
+
+        <div class="controls">
+          <div class="grid">
+            <label class="money-field">币种
+              <input id="currency" autocomplete="off" placeholder="HKD">
+            </label>
+            <label class="money-field">金额
+              <input id="amount" autocomplete="off" placeholder="$560,978.00">
+            </label>
+
+            <label class="payer-person-field">付款户名
+              <input id="payerName" autocomplete="off" placeholder="付款人姓名">
+            </label>
+            <label class="payer-person-field">付款人居住地址
+              <input id="payerAddress" autocomplete="off" placeholder="付款人地址">
+            </label>
+
+            <label class="payer-company-field">付款公司名称
+              <input id="payerCompanyName" autocomplete="off" value="EXCHANGE ONE PTY LTD">
+            </label>
+            <label class="payer-company-field">付款公司地址
+              <input id="payerCompanyAddress" autocomplete="off" value="Level 11 10 Carrington Street Sydney NSW 2000">
+            </label>
+
+            <label>收款户名
+              <input id="recipientName" autocomplete="off" placeholder="Sample Recipient">
+            </label>
+            <label>银行名称
+              <input id="bankName" autocomplete="off" placeholder="Sample Bank Limited">
+            </label>
+            <label id="bsbWrap">BSB
+              <input id="bsb" autocomplete="off" placeholder="000 000">
+            </label>
+            <label>账号
+              <input id="accountNumber" autocomplete="off" placeholder="000000000000">
+            </label>
+            <label>银行 SWIFT CODE
+              <input id="swift" autocomplete="off" placeholder="SAMPLEXX">
+            </label>
+            <label>银行地址
+              <input id="bankAddress" autocomplete="off" placeholder="Sample City">
+            </label>
+            <label class="full" id="reportedAddressLabel">收款行报备的居住详细地址
+              <input id="reportedAddress" autocomplete="off" placeholder="详细地址">
+            </label>
+            <label class="full personal-company-field">备注
+              <input id="note" autocomplete="off" placeholder="可选">
+            </label>
+          </div>
+        </div>
+
+        <pre class="output" id="output"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const els = {
+      status: document.querySelector("#status"),
+      type: document.querySelector("#instructionType"),
+      sourceText: document.querySelector("#sourceText"),
+      output: document.querySelector("#output"),
+      parseBtn: document.querySelector("#parseBtn"),
+      copyBtn: document.querySelector("#copyBtn"),
+      clearBtn: document.querySelector("#clearBtn"),
+      currency: document.querySelector("#currency"),
+      amount: document.querySelector("#amount"),
+      payerName: document.querySelector("#payerName"),
+      payerAddress: document.querySelector("#payerAddress"),
+      payerCompanyName: document.querySelector("#payerCompanyName"),
+      payerCompanyAddress: document.querySelector("#payerCompanyAddress"),
+      recipientName: document.querySelector("#recipientName"),
+      bankName: document.querySelector("#bankName"),
+      bsb: document.querySelector("#bsb"),
+      accountNumber: document.querySelector("#accountNumber"),
+      swift: document.querySelector("#swift"),
+      bankAddress: document.querySelector("#bankAddress"),
+      reportedAddress: document.querySelector("#reportedAddress"),
+      note: document.querySelector("#note"),
+      reportedAddressLabel: document.querySelector("#reportedAddressLabel")
+    };
+
+    const fieldIds = [
+      "currency",
+      "amount",
+      "payerName",
+      "payerAddress",
+      "payerCompanyName",
+      "payerCompanyAddress",
+      "recipientName",
+      "bankName",
+      "bsb",
+      "accountNumber",
+      "swift",
+      "bankAddress",
+      "reportedAddress",
+      "note"
+    ];
+
+    function setStatus(text, tone = "") {
+      els.status.textContent = text;
+      els.status.className = "status" + (tone ? " " + tone : "");
+    }
+
+    function normalize(text) {
+      return (text || "")
+        .replace(/\r/g, "\n")
+        .replace(/[：]/g, ":")
+        .replace(/[，]/g, ",")
+        .replace(/[；]/g, ";")
+        .replace(/[。]/g, "\n")
+        .replace(/\u00a0/g, " ")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n[ \t]+/g, "\n")
+        .trim();
+    }
+
+    function escapeRegex(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function afterLabel(text, labels) {
+      const group = labels.map(escapeRegex).join("|");
+      const pattern = new RegExp("(?:^|\\n|\\s)(?:" + group + ")\\s*:?\\s*([^\\n]+)", "i");
+      const match = text.match(pattern);
+      return match ? cleanValue(match[1]) : "";
+    }
+
+    function pickBetween(text, startPattern, endPatterns) {
+      const start = text.match(startPattern);
+      if (!start) return "";
+      const startIndex = start.index + start[0].length;
+      let endIndex = text.length;
+      const tail = text.slice(startIndex);
+      for (const endPattern of endPatterns) {
+        const end = tail.match(endPattern);
+        if (end && end.index < endIndex - startIndex) {
+          endIndex = startIndex + end.index;
+        }
+      }
+      return cleanValue(text.slice(startIndex, endIndex));
+    }
+
+    function cleanValue(value) {
+      return (value || "")
+        .replace(/^[-: ]+/, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function titleCaseBank(value) {
+      const known = {
+        "HANG SENG BANK LIMITED": "Hang Seng Bank Limited",
+        "STANDARD CHARTERED BANK (HONG KONG) LIMITED": "STANDARD CHARTERED BANK (HONG KONG) LIMITED",
+        "WESTPAC BANKING CORPORATION": "Westpac Banking Corporation"
+      };
+      const key = value.trim().toUpperCase();
+      return known[key] || value.trim();
+    }
+
+    function parseCurrencyAmount(text) {
+      const normalized = text.replace(/,/g, "");
+      const buy = normalized.match(/Client Buy Currency[\s\S]{0,100}?\b(AUD|USD|HKD|CNY|RMB|NZD|EUR|GBP|CAD|JPY|SGD)\b\s+Amount[\s\S]{0,60}?(?:\$|A\$|HK\$|US\$)?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+      const payable = normalized.match(/Client Buy Currency\s*(?:客户买入货币)?\s*:?\s*(AUD|USD|HKD|CNY|RMB|NZD|EUR|GBP|CAD|JPY|SGD)[\s\S]{0,180}?Amount Payable\s*(?:应付金额)?\s*(?:\$|A\$|HK\$|US\$)?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+      const money = buy || payable || normalized.match(/\b(AUD|USD|HKD|CNY|RMB|NZD|EUR|GBP|CAD|JPY|SGD)\b\s*(?:\$|A\$|HK\$|US\$)?\s*([0-9]+(?:\.[0-9]{1,2})?)/i);
+      if (!money) return {};
+      const currency = money[1].toUpperCase() === "RMB" ? "CNY" : money[1].toUpperCase();
+      const amount = "$" + Number(money[2]).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      return { currency, amount };
+    }
+
+    function parseBsb(text) {
+      const beneficiary = text.match(/Beneficiary Account[\s\S]{0,120}?BSB\s*:?\s*(\d{3}[- ]?\d{3})/i);
+      if (beneficiary) return beneficiary[1].replace("-", " ");
+
+      const labeled = afterLabel(text, ["BSB", "BSB Number", "BSB No"]);
+      const value = labeled.match(/\d{3}[- ]?\d{3}/);
+      if (value) return value[0].replace("-", " ");
+      const loose = text.match(/\b\d{3}[- ]\d{3}\b/);
+      return loose ? loose[0].replace("-", " ") : "";
+    }
+
+    function parseSwift(text) {
+      const swiftLine = text.match(/SWIFT Code[\s\S]{0,80}?\b([A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?)\b/i);
+      if (swiftLine) return swiftLine[1].toUpperCase();
+
+      const labeled = afterLabel(text, ["银行 SWIFT CODE", "SWIFT CODE", "SWIFT", "BIC"]);
+      if (/Client Buy Currency|客户买入货币/i.test(labeled)) return "";
+      const match = labeled.match(/[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?/i);
+      if (match) return match[0].toUpperCase();
+      return "";
+    }
+
+    function parseAccount(text, bsb, swift) {
+      const beneficiary = text.match(/Beneficiary Account\s*:?\s*([\s\S]{0,240}?)(?=\s+Office Use only|\s+SWIFT Code|$)/i);
+      if (beneficiary) {
+        const accountBlock = beneficiary[1];
+        const acct = accountBlock.match(/(?:Acct|Account|银行账号|账号)\s*:?\s*([0-9][0-9 -]{3,24}[0-9])/i);
+        if (acct) return tidyAccount(acct[1], bsb);
+
+        const blockCandidates = accountBlock.match(/\b[0-9][0-9 -]{3,24}[0-9]\b/g) || [];
+        const cleanBsb = (bsb || "").replace(/\D/g, "");
+        for (const candidate of blockCandidates) {
+          if (candidate.replace(/\D/g, "") !== cleanBsb) return tidyAccount(candidate, bsb);
+        }
+      }
+
+      const labeled = afterLabel(text, ["账号", "账户号码", "账户号", "Account Number", "Account No"]);
+      const fromLabel = labeled.match(/[0-9][0-9 -]{3,24}[0-9]/);
+      if (fromLabel) return tidyAccount(fromLabel[0], bsb);
+
+      const candidates = text.match(/\b[0-9][0-9 -]{4,24}[0-9]\b/g) || [];
+      const cleanBsb = (bsb || "").replace(/\D/g, "");
+      for (const candidate of candidates) {
+        const digits = candidate.replace(/\D/g, "");
+        if (digits === cleanBsb) continue;
+        if (swift && candidate.toUpperCase().includes(swift)) continue;
+        if (digits.length >= 5 && digits.length <= 18) return tidyAccount(candidate, bsb);
+      }
+      return "";
+    }
+
+    function tidyAccount(value, bsb) {
+      const cleaned = cleanValue(value).replace(/[^\d ]/g, " ").replace(/\s{2,}/g, " ").trim();
+      if (!bsb) return cleaned;
+      const bsbDigits = bsb.replace(/\D/g, "");
+      return cleaned.replace(new RegExp("^" + bsbDigits + "\\s*"), "").trim() || cleaned;
+    }
+
+    function parseName(text) {
+      const beneficiaryBlock = pickBetween(text, /Beneficiary name\s*/i, [/Beneficiary Bank/i]);
+      if (beneficiaryBlock) {
+        const nameLine = beneficiaryBlock
+          .split(/\n+/)
+          .map(cleanValue)
+          .find(line => /^[A-Za-z][A-Za-z .'-]{1,79}$/.test(line) && !/BENEFICIARY|NAME|ACCOUNT|BANK/i.test(line));
+        if (nameLine) return nameLine;
+      }
+
+      const compactName = pickBetween(text, /Beneficiary name\s*(?:收款人姓名)?\s*/i, [
+        /Beneficiary Bank/i,
+        /收款人银行/i,
+        /Beneficiary Account/i,
+        /银行账号/i,
+        /\n/
+      ]);
+      if (compactName) return stripFieldTail(compactName);
+
+      const labels = [
+        "户名",
+        "收款户名",
+        "收款人",
+        "Beneficiary Name",
+        "Beneficiary",
+        "Account Name",
+        "Recipient Name",
+        "Payee Name",
+        "Payee"
+      ];
+      const labeled = afterLabel(text, labels);
+      if (labeled) return stripFieldTail(labeled);
+
+      const lines = text.split(/\n+/).map(cleanValue).filter(Boolean);
+      const likely = lines.find(line => /^[A-Z][A-Z .'-]{3,80}$/.test(line) && !/BANK|LIMITED|TRANSFER|CONFIRMATION|PAYMENT|ADDRESS|ACCOUNT|SWIFT|BSB/.test(line));
+      return likely || "";
+    }
+
+    function parseBankName(text) {
+      const beneficiaryBlock = pickBetween(text, /Beneficiary Bank\s*/i, [/Beneficiary Account/i, /SWIFT Code/i]);
+      if (beneficiaryBlock) {
+        const bankLine = beneficiaryBlock
+          .split(/\n+/)
+          .map(cleanValue)
+          .find(line => /^[A-Za-z][A-Za-z0-9 &().,'-]{2,100}$/.test(line) && !/BENEFICIARY|ACCOUNT|BANK NAME/i.test(line));
+        if (bankLine) return titleCaseBank(bankLine);
+      }
+
+      const compactBank = pickBetween(text, /Beneficiary Bank\s*(?:收款人银行)?\s*/i, [
+        /Beneficiary Account/i,
+        /银行账号/i,
+        /SWIFT Code/i,
+        /Bank City/i,
+        /\n/
+      ]);
+      if (compactBank) return titleCaseBank(stripFieldTail(compactBank));
+
+      const labels = ["银行名称", "Bank Name", "Beneficiary Bank", "Receiving Bank", "Bank"];
+      const labeled = afterLabel(text, labels);
+      if (labeled) return titleCaseBank(stripFieldTail(labeled));
+
+      const lines = text.split(/\n+/).map(cleanValue).filter(Boolean);
+      const bankLine = lines.find(line => /BANK|WESTPAC|HANG SENG|STANDARD CHARTERED|COMMONWEALTH|NAB|ANZ|HSBC|CITIBANK|银行/i.test(line));
+      return bankLine ? titleCaseBank(stripFieldTail(bankLine)) : "";
+    }
+
+    function parseAddress(text) {
+      const clientBlock = pickBetween(text, /Client Number[\s\S]{0,80}?\d+\s*/i, [/Transaction ID/i]);
+      if (clientBlock) {
+        const clientAddress = clientBlock
+          .split(/\n+/)
+          .map(cleanValue)
+          .find(line => /\b(Australia|Hong Kong|NSW|VIC|QLD|WA|SA|ACT|NT|TAS|Kowloon|Sydney)\b/i.test(line));
+        if (clientAddress) return clientAddress;
+      }
+
+      const compactMemberAddress = pickBetween(text, /Name\s*(?:姓名)?\s+[^\n]+?\s+Client Number\s*(?:客户会员号)?\s+\d+[\s\S]{0,70}?Address\s*(?:住址)?\s*/i, [
+        /Transaction ID/i,
+        /交易编号/i,
+        /\n/
+      ]);
+      if (compactMemberAddress) return stripFieldTail(compactMemberAddress);
+
+      const memberAddress = text.match(/Name\s+[^\n]+Client Number[^\n]*\n(?:姓名[^\n]*\n)?Address\s+([^\n]+)\n住址/i);
+      if (memberAddress) return stripFieldTail(memberAddress[1]);
+
+      const addressLines = Array.from(text.matchAll(/^Address\s+([^\n]+)/gim)).map(match => stripFieldTail(match[1]));
+      const customerAddress = addressLines.find(line => !/^Level\s+\d+/i.test(line) && !/Carrington Street Sydney NSW 2000/i.test(line));
+      if (customerAddress) return customerAddress;
+
+      const labels = [
+        "收款行报备的居住详细地址",
+        "收款行报备的公司详细地址",
+        "居住详细地址",
+        "公司详细地址",
+        "Residential Address",
+        "Beneficiary Address",
+        "Recipient Address",
+        "Address"
+      ];
+      const labeled = afterLabel(text, labels);
+      if (labeled) return stripFieldTail(labeled);
+
+      const lines = text.split(/\n+/).map(cleanValue).filter(Boolean);
+      const addressLine = lines.find(line => /\b(Australia|Hong Kong|NSW|VIC|QLD|WA|SA|ACT|NT|TAS|Kowloon|Sydney)\b/i.test(line) && !/BANK|SWIFT|TRANSFER|CONFIRMATION/i.test(line));
+      return addressLine ? stripFieldTail(addressLine) : "";
+    }
+
+    function parseBankAddress(text, bankName) {
+      const bankCityBlock = pickBetween(text, /Bank City\s*/i, [/Amount Payable/i]);
+      if (bankCityBlock) {
+        const cityLine = bankCityBlock
+          .split(/\n+/)
+          .map(cleanValue)
+          .find(line => /^[A-Za-z][A-Za-z .'-]{1,60}$/.test(line) && !/BANK|CITY/i.test(line));
+        if (cityLine) return cityLine;
+      }
+
+      const labeled = afterLabel(text, ["银行地址", "Bank Address", "Bank Location"]);
+      if (labeled) return stripFieldTail(labeled);
+      const upperBank = (bankName || "").toUpperCase();
+      if (/HANG SENG|STANDARD CHARTERED|HONG KONG|HK/.test(upperBank)) return "Hong Kong";
+      if (/WESTPAC|COMMONWEALTH|NAB|ANZ|AUSTRALIA/.test(upperBank)) return "Sydney";
+      return "";
+    }
+
+    function stripFieldTail(value) {
+      return cleanValue(value)
+        .replace(/(收款人姓名|收款人银行|银行账号|银行国际代码|客户买入货币|银行所在城市|应付金额|住址)/gi, "")
+        .replace(/\s+(银行名称|账号|账户|SWIFT|BIC|银行地址|居住详细地址|公司详细地址|BSB)\s*:.*$/i, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+    }
+
+    function parsePaymentText() {
+      const text = normalize(els.sourceText.value);
+      const parsedMoney = parseCurrencyAmount(text);
+      const bsb = parseBsb(text);
+      const swift = parseSwift(text);
+      const bankName = parseBankName(text);
+
+      fillIfFound("currency", parsedMoney.currency);
+      fillIfFound("amount", parsedMoney.amount);
+      fillIfFound("recipientName", parseName(text));
+      fillIfFound("bankName", bankName);
+      fillIfFound("bsb", bsb);
+      fillIfFound("swift", swift);
+      fillIfFound("accountNumber", parseAccount(text, bsb, swift));
+      fillIfFound("bankAddress", parseBankAddress(text, bankName));
+      fillIfFound("reportedAddress", parseAddress(text));
+
+      render();
+      reportMissing();
+    }
+
+    function fillIfFound(id, value) {
+      if (value) els[id].value = value;
+    }
+
+    function reportMissing() {
+      const required = getRequiredFields();
+      fieldIds.forEach(id => els[id].classList.remove("missing"));
+      required.forEach(id => {
+        els[id].classList.toggle("missing", !els[id].value.trim());
+      });
+      const missing = required.filter(id => !els[id].value.trim()).map(labelFor);
+      els.copyBtn.disabled = missing.length > 0;
+      if (missing.length) {
+        setStatus("请补充：" + missing.join("、"), "warn");
+      } else {
+        setStatus("已生成，可复制", "good");
+      }
+    }
+
+    function labelFor(id) {
+      const map = {
+        currency: "币种",
+        amount: "金额",
+        payerName: "付款户名",
+        payerAddress: "付款人居住地址",
+        payerCompanyName: "付款公司名称",
+        payerCompanyAddress: "付款公司地址",
+        recipientName: "收款户名",
+        bankName: "银行名称",
+        accountNumber: "账号",
+        swift: "SWIFT CODE",
+        bankAddress: "银行地址",
+        reportedAddress: "详细地址"
+      };
+      return map[id] || id;
+    }
+
+    function getRequiredFields() {
+      const common = ["currency", "amount", "recipientName", "bankName", "accountNumber", "swift", "bankAddress", "reportedAddress"];
+      if (els.type.value === "companyToPersonal") {
+        return ["currency", "amount", "payerCompanyName", "payerCompanyAddress", "recipientName", "bankName", "accountNumber", "swift", "bankAddress", "reportedAddress"];
+      }
+      if (els.type.value === "companyToCompany") {
+        return ["currency", "amount", "payerCompanyName", "payerCompanyAddress", "recipientName", "bankName", "accountNumber", "swift", "bankAddress", "reportedAddress"];
+      }
+      if (els.type.value === "personalToCompany") {
+        return ["currency", "amount", "payerName", "payerAddress", "recipientName", "bankName", "accountNumber", "swift", "bankAddress", "reportedAddress"];
+      }
+      return common;
+    }
+
+    function formatAmount(value) {
+      const raw = (value || "").trim();
+      if (!raw) return "";
+      const numeric = raw
+        .replace(/^(?:AUD|USD|HKD|CNY|RMB|NZD|EUR|GBP|CAD|JPY|SGD)\s*/i, "")
+        .replace(/^(?:A\$|HK\$|US\$|\$|¥|€|£)\s*/, "")
+        .replace(/,/g, "")
+        .trim();
+      if (!/^\d+(?:\.\d{0,2})?$/.test(numeric)) return raw;
+      return "$" + Number(numeric).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function render() {
+      updateVisibility();
+      const type = els.type.value;
+      const currencyAmount = [els.currency.value.trim(), formatAmount(els.amount.value)].filter(Boolean).join(" ");
+      const accountLines = [
+        "- 户名：" + els.recipientName.value.trim(),
+        "- 银行名称：" + els.bankName.value.trim()
+      ];
+
+      if (els.bsb.value.trim()) accountLines.push("- BSB: " + els.bsb.value.trim());
+      accountLines.push("- 账号：" + els.accountNumber.value.trim());
+      accountLines.push("- 银行 SWIFT CODE：" + els.swift.value.trim());
+      accountLines.push("- 银行地址：" + els.bankAddress.value.trim());
+
+      if (type === "sameCompany") {
+        accountLines.push("- 收款行报备的公司详细地址：" + els.reportedAddress.value.trim());
+        els.output.textContent = [
+          "收款人和付款人同名(公司户)",
+          currencyAmount,
+          "收款账户信息：",
+          ...accountLines
+        ].join("\n");
+        return;
+      }
+
+      if (type === "companyToCompany") {
+        accountLines.push("- 收款行报备的公司详细地址：" + els.reportedAddress.value.trim());
+        els.output.textContent = [
+          "公司付公司(异名)",
+          currencyAmount,
+          "付款公司信息",
+          "- 付款公司名称：" + els.payerCompanyName.value.trim(),
+          "- 付款公司地址：" + els.payerCompanyAddress.value.trim(),
+          "收款账户信息(交易对手方)",
+          ...accountLines
+        ].join("\n");
+        return;
+      }
+
+      if (type === "personalToCompany") {
+        accountLines.push("- 收款行报备的居住详细地址：" + els.reportedAddress.value.trim());
+        accountLines.push("- 备注：" + els.note.value.trim());
+        els.output.textContent = [
+          "个人付公司",
+          currencyAmount,
+          "付款人信息",
+          "- 付款户名：" + els.payerName.value.trim(),
+          "- 付款人居住地址：" + els.payerAddress.value.trim(),
+          "收款账户信息(交易对手方)",
+          ...accountLines
+        ].join("\n");
+        return;
+      }
+
+      accountLines.push("- 收款行报备的居住详细地址：" + els.reportedAddress.value.trim());
+
+      if (type === "companyToPersonal") {
+        els.output.textContent = [
+          "公司付个人(异名)",
+          "移民客户，" + currencyAmount,
+          "付款公司信息",
+          "- 付款公司名称：" + els.payerCompanyName.value.trim(),
+          "- 付款公司地址：" + els.payerCompanyAddress.value.trim(),
+          "收款账户信息(交易对手方)",
+          ...accountLines
+        ].join("\n");
+        return;
+      }
+
+      els.output.textContent = [
+        "收款人和付款人同名(个人户)",
+        currencyAmount,
+        "收款账户信息：",
+        ...accountLines
+      ].join("\n");
+    }
+
+    function updateVisibility() {
+      const type = els.type.value;
+      const isCompanyPayer = type === "companyToPersonal" || type === "companyToCompany";
+      const isCompanyRecipient = type === "sameCompany" || type === "companyToCompany";
+      document.querySelectorAll(".payer-company-field").forEach(node => node.classList.toggle("hidden", !isCompanyPayer));
+      document.querySelectorAll(".payer-person-field").forEach(node => node.classList.toggle("hidden", type !== "personalToCompany"));
+      document.querySelectorAll(".personal-company-field").forEach(node => node.classList.toggle("hidden", type !== "personalToCompany"));
+      document.querySelectorAll(".money-field").forEach(node => node.classList.remove("hidden"));
+      els.reportedAddressLabel.firstChild.textContent = isCompanyRecipient
+        ? "收款行报备的公司详细地址"
+        : "收款行报备的居住详细地址";
+    }
+
+    async function copyOutput() {
+      const missing = getRequiredFields().filter(id => !els[id].value.trim());
+      if (missing.length) {
+        reportMissing();
+        return;
+      }
+      render();
+      try {
+        await navigator.clipboard.writeText(els.output.textContent);
+        setStatus("已复制到剪贴板", "good");
+      } catch (error) {
+        const range = document.createRange();
+        range.selectNodeContents(els.output);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        setStatus("已选中文案，可按 Ctrl+C 复制", "warn");
+      }
+    }
+
+    function selectTemplate(type) {
+      els.type.value = type;
+      if (type === "companyToCompany"
+          && els.payerCompanyName.value === "EXCHANGE ONE PTY LTD"
+          && els.payerCompanyAddress.value === "Level 11 10 Carrington Street Sydney NSW 2000") {
+        els.payerCompanyName.value = "";
+        els.payerCompanyAddress.value = "";
+      } else if (type === "companyToPersonal") {
+        if (!els.payerCompanyName.value.trim()) els.payerCompanyName.value = "EXCHANGE ONE PTY LTD";
+        if (!els.payerCompanyAddress.value.trim()) {
+          els.payerCompanyAddress.value = "Level 11 10 Carrington Street Sydney NSW 2000";
+        }
+      }
+      document.querySelectorAll(".template-option").forEach(button => {
+        button.classList.toggle("active", button.dataset.type === type);
+      });
+      render();
+      reportMissing();
+    }
+
+    function clearAll() {
+      els.sourceText.value = "";
+      for (const id of fieldIds) {
+        if (id === "payerCompanyName" && els.type.value === "companyToPersonal") {
+          els[id].value = "EXCHANGE ONE PTY LTD";
+        } else if (id === "payerCompanyAddress" && els.type.value === "companyToPersonal") {
+          els[id].value = "Level 11 10 Carrington Street Sydney NSW 2000";
+        } else {
+          els[id].value = "";
+        }
+      }
+      render();
+      reportMissing();
+      setStatus("已清除", "warn");
+    }
+
+    els.parseBtn.addEventListener("click", parsePaymentText);
+    els.copyBtn.addEventListener("click", copyOutput);
+    els.clearBtn.addEventListener("click", clearAll);
+    document.querySelectorAll(".template-option").forEach(button => {
+      button.addEventListener("click", () => selectTemplate(button.dataset.type));
+    });
+    els.type.addEventListener("change", () => {
+      render();
+      reportMissing();
+    });
+    fieldIds.forEach(id => els[id].addEventListener("input", () => {
+      render();
+      reportMissing();
+    }));
+    els.amount.addEventListener("blur", () => {
+      els.amount.value = formatAmount(els.amount.value);
+      render();
+      reportMissing();
+    });
+    els.sourceText.addEventListener("input", () => {
+      window.clearTimeout(els.sourceText.parseTimer);
+      els.sourceText.parseTimer = window.setTimeout(parsePaymentText, 300);
+    });
+
+    render();
+    reportMissing();
+  </script>
+</body>
+</html>

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treasury Dashboard Pro</title>
+    <style>
+        /* ================= Global Reset & Fixes ================= */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            background-color: #e0e3eb; 
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* 4-Quarter Grid Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            width: 100vw;
+            height: calc(100vh - 48px); 
+            gap: 2px;
+        }
+
+        .panel {
+            background-color: #ffffff;
+            width: 100%; height: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================= Cost Generator Panel ================= */
+        .cost-generator {
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; 
+            gap: 24px;
+        }
+
+        /* --- Header --- */
+        .cg-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f3fa;
+            padding-bottom: 16px;
+            flex-shrink: 0;
+        }
+        .cg-header .title { 
+            font-size: 18px; 
+            font-weight: 800; 
+            color: #2962FF; 
+            letter-spacing: 1px;
+        }
+        .cg-header .links {
+            display: flex;
+            gap: 12px;
+        }
+        .cg-header .links a {
+            font-size: 14px; font-weight: 600; color: #434651; 
+            text-decoration: none;
+            background: #ffffff; border: 1px solid #d1d4dc; 
+            border-radius: 6px; padding: 6px 16px;
+            transition: all .2s;
+        }
+        .cg-header .links a:hover { 
+            color: #2962FF; border-color: #2962FF; background: #f0f3fa; 
+        }
+
+        /* --- Main Layout (Left Inputs + Right Output) --- */
+        .cg-main {
+            display: flex;
+            gap: 30px;
+            flex: 1; 
+            min-height: 0;
+        }
+
+        /* Left Side: Controls */
+        .cg-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-width: 0; 
+            justify-content: space-between; 
+        }
+
+        /* OCR Input */
+        .ocr-row { 
+            display: flex; gap: 16px; 
+            flex-shrink: 0;
+        }
+        .ocr-row textarea {
+            flex: 1; height: 50px; background: #f8f9fd; border: 1px solid #d1d4dc;
+            border-radius: 8px; padding: 12px 16px; font-size: 15px; resize: none;
+            color: #131722; transition: border-color 0.2s;
+        }
+        .ocr-row textarea:focus { outline: none; border-color: #2962FF; }
+        .btn-extract { 
+            font-size: 15px; font-weight: 600; cursor: pointer; padding: 0 24px; 
+            border: 1px solid #d1d4dc; border-radius: 8px; background: #fff; color: #434651;
+            transition: all 0.2s;
+        }
+        .btn-extract:hover { background: #f0f3fa; color: #2962FF; border-color: #2962FF; }
+        .btn-clear {
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid #d1d4dc;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #787b86;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .ocr-row .btn-clear { padding: 0 16px; }
+        .btn-clear:hover { background: #fff5f5; color: #d50000; border-color: #ffcdd2; }
+
+        /* Rates & Margins Card */
+        .control-card {
+            background: #f8f9fd;
+            border: 1px solid #e0e3eb;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        /* 修复出框：使用 minmax(0, 1fr) 强制控制列宽边界 */
+        .rates-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)); 
+            gap: 20px 16px;
+        }
+        .input-group { 
+            display: flex; align-items: center; gap: 10px; 
+        }
+        .input-group label { 
+            width: 70px; font-size: 14px; color: #787b86; font-weight: 600; text-align: right; flex-shrink: 0;
+        }
+        .input-group input {
+            flex: 1; min-width: 0; width: 100%; padding: 10px 12px; border: 1px solid #d1d4dc;
+            border-radius: 6px; font-family: 'Courier New', Courier, monospace; 
+            font-size: 16px; font-weight: 700; color: #131722; transition: all 0.2s;
+        }
+        .input-group input:focus { outline: none; border-color: #2962FF; box-shadow: 0 0 0 2px rgba(41,98,255,0.1); }
+
+        .margin-row {
+            display: flex;
+            gap: 24px;
+            padding-top: 20px;
+            border-top: 1px dashed #d1d4dc;
+            align-items: center;
+        }
+        
+        /* 核心数据突出显示：LP Highlight Badge */
+        .lp-highlight { 
+            margin-left: auto; /* 推到最右侧 */
+            background: #eef2ff; /* 浅蓝底色 */
+            border: 2px solid #2962FF; /* 深蓝强调边框 */
+            border-radius: 8px;
+            padding: 8px 20px;
+            font-size: 16px; 
+            color: #2962FF; 
+            font-weight: 800; 
+            box-shadow: 0 4px 12px rgba(41, 98, 255, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 0.5px;
+        }
+        .lp-highlight span {
+            color: #131722; /* 具体的数值用黑色强调 */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
+        }
+
+        /* Right Side: Output text */
+        .cg-right {
+            width: 280px; 
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .output-area {
+            flex: 1; background: #f8f9fd; border: 1px solid #e0e3eb;
+            border-radius: 12px; padding: 20px; font-size: 15px; line-height: 1.8; 
+            resize: none; color: #131722; outline: none;
+        }
+        .btn-copy {
+            background: #2962FF; color: #fff; border: none; border-radius: 8px;
+            padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: background 0.2s; flex-shrink: 0;
+        }
+        .btn-copy:hover { background: #1e53e5; }
+
+        @media (max-width: 980px) {
+            body, html {
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+                width: 100%;
+                height: auto;
+                min-height: 100vh;
+                gap: 8px;
+                padding: 8px;
+            }
+
+            .panel {
+                min-height: 320px;
+                height: auto;
+                border-radius: 8px;
+            }
+
+            .tradingview-widget-container {
+                min-height: 320px;
+            }
+
+            .tradingview-widget-container__widget {
+                min-height: 288px;
+            }
+
+            .cost-generator {
+                order: -1;
+                padding: 18px;
+                gap: 18px;
+                min-height: auto;
+            }
+
+            .cg-header {
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .cg-header .links {
+                justify-content: flex-end;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .cg-header .links a {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+
+            .cg-main {
+                flex-direction: column;
+                gap: 16px;
+                min-height: auto;
+            }
+
+            .cg-left {
+                gap: 16px;
+            }
+
+            .ocr-row {
+                display: grid;
+                grid-template-columns: 1fr auto auto;
+                gap: 8px;
+            }
+
+            .ocr-row textarea {
+                grid-column: 1 / -1;
+                height: 78px;
+            }
+
+            .btn-extract,
+            .ocr-row .btn-clear {
+                min-height: 42px;
+            }
+
+            .control-card {
+                padding: 16px;
+                gap: 18px;
+            }
+
+            .rates-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .input-group label {
+                width: 76px;
+                text-align: left;
+            }
+
+            .margin-row {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .margin-row .input-group {
+                max-width: none !important;
+                flex: 1 1 150px;
+            }
+
+            .lp-highlight {
+                width: 100%;
+                margin-left: 0;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+
+            .cg-right {
+                width: 100%;
+            }
+
+            .output-area {
+                min-height: 180px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .dashboard {
+                padding: 6px;
+            }
+
+            .panel {
+                min-height: 280px;
+            }
+
+            .tradingview-widget-container {
+                min-height: 280px;
+            }
+
+            .tradingview-widget-container__widget {
+                min-height: 248px;
+            }
+
+            .cost-generator {
+                padding: 14px;
+            }
+
+            .cg-header {
+                flex-direction: column;
+            }
+
+            .cg-header .links {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .cg-header .links a {
+                flex: 1 1 auto;
+                text-align: center;
+            }
+
+            .ocr-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ocr-row textarea {
+                grid-column: 1 / -1;
+            }
+
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+
+            .input-group label {
+                width: auto;
+            }
+
+            .lp-highlight {
+                display: block;
+                line-height: 1.8;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="panel">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {
+          "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",
+          "symbol": "CMCMARKETS:USDAUD", "backgroundColor": "#ffffff", "gridColor": "rgba(46, 46, 46, 0.06)", "autosize": true
+          }
+          </script>
+        </div>
+    </div>
+
+    <div class="panel cost-generator">
+        <div class="cg-header">
+            <span class="title">COST GENERATOR</span>
+            <div class="links">
+                <a href="https://www.moneychain.com.au/exchange-rates/" target="_blank">Rates</a>
+                <a href="https://www.boc.cn/sourcedb/whpj/" target="_blank">Bank Rate</a>
+                <a href="https://shinyuan-my.sharepoint.com/:x:/r/personal/database_shinyuan_com_au/_layouts/15/Doc.aspx?sourcedoc=%7B946037A2-05E4-4407-921E-9D23BCEDF0DE%7D&file=%5BAmanda%5D%20Transaction%20Summary%20-%20Strictly%20Confidential.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1" target="_blank" title="Transaction Summary Excel">Transaction</a>
+            </div>
+        </div>
+
+        <div class="cg-main">
+            <div class="cg-left">
+                <div class="ocr-row">
+                    <textarea id="raw-text" placeholder="Paste OCR text here..."></textarea>
+                    <button class="btn-extract" onclick="smartExtract()">Extract</button>
+                    <button class="btn-clear" onclick="clearCostGenerator()">Clear</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="rates-grid">
+                        <div class="input-group"><label>USD/CNY</label><input type="text" id="v-renmei" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>USDT/CNY</label><input type="text" id="v-renu" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>HKD/CNY</label><input type="text" id="v-rengang" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>AUD/CNY</label><input type="text" id="v-aoren" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>USD/AUD</label><input type="text" id="v-usdaud" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                    </div>
+                    <div class="margin-row">
+                        <div class="input-group" style="max-width: 180px;"><label>POBO%</label><input type="text" id="m-pobo" value="0.4" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group" style="max-width: 180px;"><label>LP%</label><input type="text" id="m-lp" value="0.25" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        
+                        <div class="lp-highlight" id="lp-hint">
+                            LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cg-right">
+                <textarea class="output-area" id="output-box" readonly></textarea>
+                <button class="btn-copy" onclick="copyResult()">Copy Result</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="panel">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {
+          "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",
+          "symbol": "CMCMARKETS:AUDCNH", "backgroundColor": "#ffffff", "gridColor": "rgba(46, 46, 46, 0.06)", "autosize": true
+          }
+          </script>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="tradingview-widget-container" style="height:100%;width:100%">
+          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+          {
+          "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",
+          "symbol": "CMCMARKETS:USDCNH", "backgroundColor": "#ffffff", "gridColor": "rgba(46, 46, 46, 0.06)", "autosize": true
+          }
+          </script>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Standard Input Calc (For Rates Panel) ---
+    function parseExcelMath(str) {
+        if (!str) return 0;
+        let expr = str.toString().trim();
+        if (expr.startsWith('=')) expr = expr.substring(1); 
+        if (/^[\d\.\+\-\*\/\(\)\s]+$/.test(expr)) {
+            try {
+                let result = Function('"use strict";return (' + expr + ')')();
+                return result === undefined || isNaN(result) ? 0 : result;
+            } catch { return 0; }
+        }
+        return parseFloat(str) || 0;
+    }
+
+    function evalStandard(el) {
+        if (!el.value) return;
+        let val = parseExcelMath(el.value);
+        if (val) el.value = Math.round(val * 100000) / 100000;
+        if (el.id.startsWith('v-') || el.id.startsWith('m-')) autoUpdate();
+    }
+
+    document.querySelectorAll('.input-group input').forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') this.blur();
+        });
+    });
+
+    // --- Main Calculation Logic ---
+    function normalizeHkdRate(raw) {
+        if (!raw) return '';
+        const cleaned = raw.toString().replace(/[^\d.]/g, '');
+        if (!cleaned) return '';
+        const num = parseFloat(cleaned);
+        if (!isNaN(num) && num >= 0.7 && num < 1) return num.toFixed(4);
+
+        const digits = cleaned.replace(/\D/g, '');
+        if (/^0?\d{4}$/.test(digits)) {
+            const rate = parseInt(digits, 10) / 10000;
+            return rate >= 0.7 && rate < 1 ? rate.toFixed(4) : '';
+        }
+        return '';
+    }
+
+    function smartExtract() {
+        const text = document.getElementById('raw-text').value;
+        if (!text) return;
+        const nums = text.match(/\d+(?:\.\d+)?/g) || [];
+        let renmei = '', renu = '', rengang = '';
+        
+        const hkHint = text.match(/(?:港币|港幣|港|HKD)[^\d]*(0?\d{4}|0?\.\d{3,5})/i);
+        if (hkHint) rengang = normalizeHkdRate(hkHint[1]);
+        if (!rengang) {
+            const hkVal = nums.map(normalizeHkdRate).find(Boolean);
+            if (hkVal) rengang = hkVal;
+        }
+        
+        const uVal = text.match(/[uU](?:价|成本)?\s*[:：]?\s*([67]\.\d+)/);
+        if (uVal) renu = uVal[1];
+        
+        const mainVal = nums.find(n => parseFloat(n) >= 6 && n !== renu);
+        if (mainVal) renmei = mainVal;
+
+        if (renmei) document.getElementById('v-renmei').value = renmei;
+        if (renu)   document.getElementById('v-renu').value = renu;
+        if (rengang) document.getElementById('v-rengang').value = rengang;
+        autoUpdate();
+    }
+
+    function clearCostGenerator() {
+        document.getElementById('raw-text').value = '';
+        ['v-renmei', 'v-renu', 'v-rengang', 'v-aoren', 'v-usdaud'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('m-pobo').value = '0.4';
+        document.getElementById('m-lp').value = '0.25';
+        autoUpdate();
+    }
+
+    function autoUpdate() {
+        const getV = (id) => parseExcelMath(document.getElementById(id).value);
+        
+        const u = getV('v-renu');
+        const usdaud = getV('v-usdaud');
+        const p = getV('m-pobo') / 100;
+        const l = getV('m-lp') / 100;
+        
+        let poboCost = '待更新', nppCost = '待更新';
+        
+        if (u) poboCost = (u * (1 + p)).toFixed(4);
+        
+        if (usdaud) {
+            const lpRate = usdaud * (1 - l);
+            // 写入新的强调版样式结构
+            document.getElementById('lp-hint').innerHTML = `LP Rate: <span>${lpRate.toFixed(4)}</span> &nbsp;|&nbsp; A/U: <span>${(1/lpRate).toFixed(4)}</span>`;
+            if (u) nppCost = (u / lpRate).toFixed(4);
+        } else {
+            document.getElementById('lp-hint').innerHTML = `LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>`;
+        }
+
+        const txtRenmei = document.getElementById('v-renmei').value || '待更新';
+        const txtRenu = document.getElementById('v-renu').value || '待更新';
+        const txtRengang = document.getElementById('v-rengang').value || '待更新';
+        const txtAoren = document.getElementById('v-aoren').value || '待更新';
+
+        document.getElementById('output-box').value = 
+`今日成本指引：
+人美 ${txtRenmei}
+人美POBO ${poboCost}
+人U ${txtRenu}
+人澳成本 ${nppCost}
+港币 ${txtRengang}
+澳人 ${txtAoren}`;
+    }
+
+    function copyResult() {
+        const box = document.getElementById('output-box');
+        box.select(); box.setSelectionRange(0, 99999);
+        try {
+            document.execCommand('copy');
+            const btn = document.querySelector('.btn-copy');
+            const origText = btn.innerText;
+            btn.innerText = 'Copied ✓';
+            btn.style.background = '#00c853'; 
+            setTimeout(() => {
+                btn.innerText = origText;
+                btn.style.background = '#2962FF';
+            }, 1500);
+        } catch { alert('Copy Failed'); }
+        window.getSelection()?.removeAllRanges();
+    }
+
+    window.onload = () => autoUpdate();
+</script>
+</body>
+</html>

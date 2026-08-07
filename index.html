@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EO Treasury Workbench</title>
+    <meta
+      name="description"
+      content="EO Treasury internal workbench for treasury tools and downloadable utilities."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workbench navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">EO</span>
+          <div>
+            <h1>EO Treasury</h1>
+            <p>Workbench</p>
+          </div>
+        </div>
+
+        <nav class="nav" aria-label="Tools">
+          <button class="nav-item active" type="button" data-view="home">
+            <span>Overview</span>
+          </button>
+          <button class="nav-item" type="button" data-src="./tools/payment-instruction-generator.html">
+            <span>Payment Instruction</span>
+          </button>
+          <button class="nav-item" type="button" data-src="./tools/fx-calculator.html">
+            <span>FX Calculator</span>
+          </button>
+          <button class="nav-item" type="button" data-src="./tools/bank-account-modify.html">
+            <span>Bank Account Modify</span>
+          </button>
+          <button class="nav-item" type="button" data-src="./apps/commission/index.html">
+            <span>Commission Settlement</span>
+          </button>
+          <button class="nav-item" type="button" data-view="toolbox">
+            <span>Toolbox</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Internal Tools</p>
+            <h2 id="view-title">Overview</h2>
+          </div>
+          <a class="open-link" id="open-link" href="#" target="_blank" rel="noreferrer" hidden>
+            Open in new tab
+          </a>
+        </header>
+
+        <section class="home-view" id="home-view">
+          <div class="intro">
+            <h3>工作台</h3>
+            <p>
+              这里先把常用 HTML 工具、佣金结算系统和可下载小工具放到一个入口里。
+              后续如果要部署到 GitHub Pages，直接上传这个文件夹即可。
+            </p>
+          </div>
+
+          <div class="tool-grid" aria-label="Available tools">
+            <button class="tool-card" type="button" data-src="./tools/payment-instruction-generator.html">
+              <span>Payment Instruction</span>
+              <strong>付款指令生成</strong>
+              <small>生成付款相关文本和表单内容</small>
+            </button>
+            <button class="tool-card" type="button" data-src="./tools/fx-calculator.html">
+              <span>FX Calculator</span>
+              <strong>汇率计算器</strong>
+              <small>快速处理常用 FX 计算</small>
+            </button>
+            <button class="tool-card" type="button" data-src="./tools/bank-account-modify.html">
+              <span>Bank Account Modify</span>
+              <strong>银行账户修改</strong>
+              <small>整理账户修改所需信息</small>
+            </button>
+            <button class="tool-card" type="button" data-src="./apps/commission/index.html">
+              <span>Commission Settlement</span>
+              <strong>佣金结算</strong>
+              <small>现有 React 应用的静态版本</small>
+            </button>
+          </div>
+        </section>
+
+        <section class="toolbox-view" id="toolbox-view" hidden>
+          <div class="intro">
+            <h3>工具箱</h3>
+            <p>这里放不需要在线运行、需要下载到本机使用的小工具。</p>
+          </div>
+
+          <div class="download-card">
+            <div>
+              <p class="eyebrow">Download</p>
+              <h3>Daily Folder Creator</h3>
+              <p>
+                包含 `daily_create_folder.py`、`template.txt` 和相关模板文件。
+                下载后解压，在本机目录里运行即可生成文件夹和空 Word 文档。
+              </p>
+            </div>
+            <a class="download-button" href="./downloads/daily-folder-creator.zip" download>
+              Download ZIP
+            </a>
+          </div>
+
+        </section>
+
+        <section class="frame-view" id="frame-view" hidden>
+          <iframe id="tool-frame" title="Selected EO Treasury tool"></iframe>
+        </section>
+      </main>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>

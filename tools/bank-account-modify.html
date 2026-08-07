@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>银行账号格式修改器</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d8dde6;
+      --accent: #0f766e;
+      --accent-dark: #115e59;
+      --soft: #e8f3f1;
+      --warn: #9a3412;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0;
+    }
+
+    header {
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 4vw, 40px);
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 14px 36px rgba(31, 41, 55, 0.07);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 340px;
+      padding: 18px;
+      resize: vertical;
+      border: 0;
+      outline: 0;
+      color: var(--ink);
+      background: transparent;
+      font: 16px/1.75 Consolas, "Microsoft YaHei", monospace;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 18px 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    button {
+      min-height: 40px;
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    .primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .primary:hover {
+      background: var(--accent-dark);
+      color: #fff;
+    }
+
+    .fields {
+      display: grid;
+      gap: 13px;
+      padding: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      font: 15px/1.4 "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      outline: 3px solid var(--soft);
+    }
+
+    .output {
+      margin: 0 18px 18px;
+      padding: 16px;
+      min-height: 156px;
+      white-space: pre-wrap;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      font: 17px/1.85 Consolas, "Microsoft YaHei", monospace;
+    }
+
+    .tips {
+      margin-top: 16px;
+      padding: 14px 18px;
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      border-radius: 6px;
+      color: #23413e;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    @media (max-width: 860px) {
+      main {
+        width: min(100% - 20px, 680px);
+        padding: 20px 0;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>银行账号格式修改器</h1>
+      <p class="subtitle">把渠道发来的账号信息粘进左边，右边会整理成：卡号、户名、开户行、额度。识别不准时可直接改右侧字段。</p>
+    </header>
+
+    <section class="workspace" aria-label="格式修改工作区">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>渠道原文</h2>
+          <div class="status" id="status">等待粘贴内容</div>
+        </div>
+        <textarea id="source" placeholder="例如：
+张三  6222000000000000
+示例银行示例支行
+额度50万
+
+或：
+户名：张三，账号：6222-0000-0000-0000，开户行 示例银行示例支行，额度 RMB500,000"></textarea>
+        <div class="actions">
+          <button class="primary" id="parseBtn" type="button">整理格式</button>
+          <button id="exampleBtn" type="button">填入示例</button>
+          <button id="clearBtn" type="button">清空</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>标准格式</h2>
+          <button class="primary" id="copyBtn" type="button">复制结果</button>
+        </div>
+        <div class="fields">
+          <label>卡号
+            <input id="card" autocomplete="off" placeholder="6222 0000 0000 0000">
+          </label>
+          <label>户名
+            <input id="name" autocomplete="off" placeholder="张三">
+          </label>
+          <label>开户行
+            <input id="bank" autocomplete="off" placeholder="示例银行示例支行">
+          </label>
+          <label>额度
+            <input id="limit" autocomplete="off" placeholder="RMB 500,000">
+          </label>
+        </div>
+        <pre class="output" id="output"></pre>
+      </div>
+    </section>
+
+    <div class="tips">
+      支持识别“卡号/卡  号/账号/银行卡号”、“户名/户  名/姓名/收款人”、“开户行/支行/银行”、“额度/金额/限额/安排/入”等常见写法；额度里的“50万”“80w”“入50w”“110183”“RMB500,000”会尽量统一成 RMB 500,000。
+    </div>
+  </main>
+
+  <script>
+    const source = document.querySelector("#source");
+    const statusEl = document.querySelector("#status");
+    const fields = {
+      card: document.querySelector("#card"),
+      name: document.querySelector("#name"),
+      bank: document.querySelector("#bank"),
+      limit: document.querySelector("#limit")
+    };
+    const output = document.querySelector("#output");
+
+    const examples = [
+      "张三\\n6222000000000000\\n示例银行示例支行\\n额度50万",
+      "户名：张三，账号：6222-0000-0000-0000，开户行 示例银行示例支行，额度 RMB500,000",
+      "收款人 张三\\n银行卡号 6222 0000 0000 0000\\n开户网点：示例银行示例支行\\n限额：500000",
+      "李四\\n6222 0000 0000 1111\\n测试银行测试支行\\n安排80w",
+      "王五\\n6222000000002222\\n样例银行\\n开户行样例城市样例支行\\n安排693500",
+      "样例城市样例支行\\n\\n样例银行\\n\\n\\n6222000000003333\\n\\n赵六\\n\\n入50w",
+      "户  名：钱七\\n卡  号：6222000000004444\\n开户行：演示银行演示支行\\n50w",
+      "户  名：钱七\\n卡  号：6222000000004444\\n开户行：演示银行演示支行\\n110183"
+    ];
+
+    function normalizeText(text) {
+      return text
+        .replace(/[，。；、]/g, "\n")
+        .replace(/[：:]/g, ":")
+        .replace(/\r/g, "\n")
+        .replace(/\t/g, " ")
+        .replace(/[ ]{2,}/g, " ")
+        .trim();
+    }
+
+    function afterLabel(text, labels) {
+      const labelGroup = labels.map(flexibleLabel).join("|");
+      const pattern = new RegExp("(?:^|\\n|\\s)(?:" + labelGroup + ")\\s*[:：]?\\s*([^\\n,，;；]+)", "i");
+      const match = text.match(pattern);
+      return match ? cleanupValue(match[1]) : "";
+    }
+
+    function flexibleLabel(label) {
+      return label.split("").map(char => escapeRegex(char)).join("\\s*");
+    }
+
+    function escapeRegex(value) {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function cleanupValue(value) {
+      return value
+        .replace(/^(为|是|:|：|-|—)+/, "")
+        .replace(/\s*(卡号|账号|户名|姓名|开户行|额度|金额|限额|安排|入)\s*$/i, "")
+        .trim();
+    }
+
+    function formatCard(value) {
+      const digits = (value || "").replace(/\D/g, "");
+      if (!digits) return "";
+      return digits.replace(/(.{4})/g, "$1 ").trim();
+    }
+
+    function findCard(text) {
+      const labeled = afterLabel(text, ["银行卡号", "银行账号", "卡号", "账号", "账户", "帐号"]);
+      const labeledDigits = labeled.replace(/\D/g, "");
+      if (labeledDigits.length >= 10) return formatCard(labeledDigits);
+
+      const compact = text.replace(/[\s-]/g, "");
+      const matches = compact.match(/\d{12,23}/g) || [];
+      if (matches.length) return formatCard(matches[0]);
+
+      const numberLine = text
+        .split(/\n+/)
+        .map(line => line.trim())
+        .find(line => /^\d[\d\s-]{8,}\d$/.test(line) && !/[万wW]|RMB|人民币|额度|金额|限额|安排|入/i.test(line));
+      return numberLine ? formatCard(numberLine) : "";
+    }
+
+    function findName(text, card) {
+      const labeled = afterLabel(text, ["户名", "姓名", "收款人", "持卡人", "客户名", "名字"]);
+      const labeledName = firstChineseName(labeled);
+      if (labeledName) return labeledName;
+
+      const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
+      const cardDigits = card.replace(/\D/g, "");
+      for (const line of lines) {
+        const cleaned = line.replace(cardDigits, "").replace(/\d/g, "").trim();
+        if (/银行|支行|开户|额度|金额|限额|RMB|人民币/i.test(cleaned)) continue;
+        const name = firstChineseName(cleaned);
+        if (name) return name;
+      }
+      return "";
+    }
+
+    function firstChineseName(value) {
+      const match = (value || "").match(/[\u4e00-\u9fa5·]{2,8}/);
+      return match ? match[0].replace(/[：:]/g, "").trim() : "";
+    }
+
+    function findBank(text) {
+      const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
+      const labeled = afterLabel(text, ["开户网点", "开户银行", "开户行", "支行"]);
+      if (/银行|信用社|农商行|农信/i.test(labeled)) return stripTrailingNoise(labeled);
+      if (/支行|分行/.test(labeled)) {
+        const bankPrefix = lines
+          .map(line => stripTrailingNoise(line))
+          .find(line => /银行|信用社|农商行|农信/.test(line) && !/支行|分行/.test(line));
+        return bankPrefix ? mergeBankLines(bankPrefix, labeled) : stripTrailingNoise(labeled);
+      }
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = stripTrailingNoise(lines[index]);
+        const next = stripTrailingNoise(lines[index + 1] || "");
+        const previous = stripTrailingNoise(lines[index - 1] || "");
+        if (!/银行|信用社|农商行|农信/.test(line)) continue;
+        if (/支行|分行/.test(previous)) {
+          return mergeBankLines(line, previous);
+        }
+        if (/^开户行/.test(next) || /支行|分行/.test(next)) {
+          return mergeBankLines(line, next);
+        }
+        if (/支行|分行/.test(line)) return line;
+      }
+
+      const bankLine = lines.find(line => /银行|支行|分行|信用社|农商行|农信/.test(line));
+      return bankLine ? stripTrailingNoise(bankLine) : "";
+    }
+
+    function mergeBankLines(bankLine, branchLine) {
+      const bank = stripTrailingNoise(bankLine);
+      const branch = stripTrailingNoise(branchLine).replace(/^开户行\s*[:：]?/, "").trim();
+      if (!branch) return bank;
+      if (branch.startsWith(bank)) return branch;
+      return bank + branch;
+    }
+
+    function stripTrailingNoise(value) {
+      return cleanupValue(value)
+        .replace(/(额度|金额|限额|安排|入|卡号|账号|户名|姓名|收款人).*$/i, "")
+        .replace(/\d{6,}.*/, "")
+        .trim();
+    }
+
+    function findLimit(text, card) {
+      const labeled = afterLabel(text, ["额度", "授信额度", "金额", "限额", "可用额度", "安排", "入"]);
+      const fromLabel = parseMoney(labeled);
+      if (fromLabel) return fromLabel;
+
+      const moneyContext = text.match(/(?:额度|金额|限额|安排|入|RMB|人民币|¥)\s*[:：]?\s*([A-Za-z¥￥\d,.，万wW\s]+)/i);
+      if (moneyContext) return parseMoney(moneyContext[1]);
+
+      const moneyLine = text
+        .split(/\n+/)
+        .map(line => line.trim())
+        .find(line => /^(?:RMB\s*)?\d+(?:\.\d+)?\s*(?:万|w)$/i.test(line));
+      if (moneyLine) return parseMoney(moneyLine);
+
+      const plainAmountLine = findPlainAmountLine(text, card);
+      return plainAmountLine ? parseMoney(plainAmountLine) : "";
+    }
+
+    function findPlainAmountLine(text, card) {
+      const cardDigits = (card || "").replace(/\D/g, "");
+      return text
+        .split(/\n+/)
+        .map(line => line.trim())
+        .find(line => {
+          const digits = line.replace(/\D/g, "");
+          if (!/^\d{5,9}$/.test(digits)) return false;
+          if (cardDigits && digits === cardDigits) return false;
+          if (/卡号|账号|账户|帐号|户名|姓名|开户|银行|支行|分行/i.test(line)) return false;
+          return line === digits || /^RMB\s*\d[\d,]*$/i.test(line);
+        });
+    }
+
+    function parseMoney(value) {
+      if (!value) return "";
+      const normalized = value.replace(/，/g, ",").replace(/人民币|元|圆|¥|￥/g, "").trim();
+      const wan = normalized.match(/(\d+(?:\.\d+)?)\s*(万|w)/i);
+      if (wan) return "RMB " + withCommas(Math.round(Number(wan[1]) * 10000));
+
+      const number = normalized.match(/\d[\d,\s]*(?:\.\d+)?/);
+      if (!number) return "";
+      const amount = Number(number[0].replace(/[,\s]/g, ""));
+      if (!Number.isFinite(amount)) return "";
+      return "RMB " + withCommas(amount);
+    }
+
+    function withCommas(number) {
+      return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(number);
+    }
+
+    function parseSource() {
+      const text = normalizeText(source.value);
+      const card = findCard(text);
+      const name = findName(text, card);
+      const bank = findBank(text);
+      const limit = findLimit(text, card);
+
+      fields.card.value = card;
+      fields.name.value = name;
+      fields.bank.value = bank;
+      fields.limit.value = limit;
+      renderOutput();
+
+      const missing = [
+        ["卡号", card],
+        ["户名", name],
+        ["开户行", bank],
+        ["额度", limit]
+      ].filter(item => !item[1]).map(item => item[0]);
+
+      statusEl.innerHTML = missing.length
+        ? "<span class='warn'>请补充：" + missing.join("、") + "</span>"
+        : "已整理完成";
+    }
+
+    function renderOutput() {
+      output.textContent = [
+        "卡号：" + fields.card.value.trim(),
+        "户名：" + fields.name.value.trim(),
+        "开户行：" + fields.bank.value.trim(),
+        "额度：" + fields.limit.value.trim()
+      ].join("\n");
+    }
+
+    async function copyOutput() {
+      renderOutput();
+      const text = output.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        statusEl.textContent = "已复制到剪贴板";
+      } catch (error) {
+        const range = document.createRange();
+        range.selectNodeContents(output);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        statusEl.textContent = "已选中结果，可按 Ctrl+C 复制";
+      }
+    }
+
+    document.querySelector("#parseBtn").addEventListener("click", parseSource);
+    document.querySelector("#copyBtn").addEventListener("click", copyOutput);
+    document.querySelector("#clearBtn").addEventListener("click", () => {
+      source.value = "";
+      Object.values(fields).forEach(input => input.value = "");
+      statusEl.textContent = "等待粘贴内容";
+      renderOutput();
+      source.focus();
+    });
+    document.querySelector("#exampleBtn").addEventListener("click", () => {
+      const pick = examples[Math.floor(Math.random() * examples.length)];
+      source.value = pick;
+      parseSource();
+    });
+    source.addEventListener("input", () => {
+      window.clearTimeout(source.parseTimer);
+      source.parseTimer = window.setTimeout(parseSource, 250);
+    });
+    Object.values(fields).forEach(input => input.addEventListener("input", renderOutput));
+    renderOutput();
+  </script>
+</body>
+</html>
