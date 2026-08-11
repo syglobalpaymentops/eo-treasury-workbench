@@ -21,10 +21,10 @@
         /* 4-Quarter Grid Layout */
         .dashboard {
             display: grid;
-            grid-template-columns: minmax(560px, 1.08fr) minmax(460px, 0.92fr);
+            grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
             width: 100vw;
-            height: calc(100vh - 48px); 
+            height: calc(100dvh - 34px);
             gap: 2px;
         }
 
@@ -39,11 +39,11 @@
 
         /* ================= Cost Generator Panel ================= */
         .cost-generator {
-            padding: clamp(18px, 1.6vw, 30px) clamp(22px, 2.1vw, 40px);
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between; 
-            gap: 24px;
+            gap: 9px;
+            overflow: auto;
         }
 
         /* --- Header --- */
@@ -52,7 +52,7 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 2px solid #f0f3fa;
-            padding-bottom: 16px;
+            padding-bottom: 9px;
             flex-shrink: 0;
         }
         .cg-header .title { 
@@ -63,13 +63,13 @@
         }
         .cg-header .links {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
         .cg-header .links a {
-            font-size: 14px; font-weight: 600; color: #434651; 
+            font-size: 13px; font-weight: 600; color: #434651;
             text-decoration: none;
             background: #ffffff; border: 1px solid #d1d4dc; 
-            border-radius: 6px; padding: 6px 16px;
+            border-radius: 6px; padding: 6px 12px;
             transition: all .2s;
         }
         .cg-header .links a:hover { 
@@ -78,35 +78,35 @@
 
         /* --- Main Layout (Left Inputs + Right Output) --- */
         .cg-main {
-            display: flex;
-            gap: clamp(16px, 1.6vw, 30px);
+            display: grid;
+            grid-template-columns: minmax(0, 1.08fr) minmax(235px, 0.92fr);
+            grid-template-rows: 42px minmax(0, 1fr);
+            grid-template-areas:
+                "ocr result"
+                "controls result";
+            gap: 10px;
             flex: 1; 
             min-height: 0;
         }
 
         /* Left Side: Controls */
-        .cg-left {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: clamp(16px, 1.4vw, 24px);
-            min-width: 0; 
-            justify-content: space-between; 
-        }
-
         /* OCR Input */
         .ocr-row { 
-            display: flex; gap: 16px; 
-            flex-shrink: 0;
+            grid-area: ocr;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 8px;
+            min-width: 0;
         }
         .ocr-row textarea {
-            flex: 1; height: 50px; background: #f8f9fd; border: 1px solid #d1d4dc;
-            border-radius: 8px; padding: 12px 16px; font-size: 15px; resize: none;
+            height: 42px; background: #f8f9fd; border: 1px solid #d1d4dc;
+            border-radius: 8px; padding: 10px 12px; font-size: 14px; resize: none;
             color: #131722; transition: border-color 0.2s;
+            min-width: 0;
         }
         .ocr-row textarea:focus { outline: none; border-color: #2962FF; }
         .btn-extract { 
-            font-size: 15px; font-weight: 600; cursor: pointer; padding: 0 24px; 
+            font-size: 14px; font-weight: 700; cursor: pointer; padding: 0 15px;
             border: 1px solid #d1d4dc; border-radius: 8px; background: #fff; color: #434651;
             transition: all 0.2s;
         }
@@ -122,46 +122,62 @@
             transition: all 0.2s;
             white-space: nowrap;
         }
-        .ocr-row .btn-clear { padding: 0 16px; }
+        .ocr-row .btn-clear { padding: 0 12px; }
         .btn-clear:hover { background: #fff5f5; color: #d50000; border-color: #ffcdd2; }
 
         /* Rates & Margins Card */
         .control-card {
-            background: #f8f9fd;
-            border: 1px solid #e0e3eb;
-            border-radius: 12px;
-            padding: clamp(18px, 1.4vw, 24px);
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            flex: 1;
-            justify-content: center;
+            grid-area: controls;
+            background: #f7f9fe;
+            border: 1px solid #dfe5f1;
+            border-radius: 9px;
+            padding: 10px;
+            display: grid;
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: 10px;
+            min-height: 0;
         }
 
         /* 修复出框：使用 minmax(0, 1fr) 强制控制列宽边界 */
         .rates-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr)); 
-            gap: 16px 14px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-content: stretch;
+            gap: 8px;
+            min-height: 0;
+        }
+        .rates-grid .input-group:nth-child(5) {
+            grid-column: 1 / -1;
         }
         .input-group { 
-            display: flex; align-items: center; gap: 10px; 
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: center;
+            gap: 6px;
+            min-height: 66px;
+            padding: 9px 10px;
+            background: #ffffff;
+            border: 1px solid #e2e6ef;
+            border-radius: 7px;
         }
         .input-group label { 
-            width: 70px; font-size: 14px; color: #787b86; font-weight: 600; text-align: right; flex-shrink: 0;
+            width: auto; font-size: 12px; color: #5d6473; font-weight: 800; text-align: left; flex-shrink: 0;
         }
         .input-group input {
-            flex: 1; min-width: 0; width: 100%; padding: 10px 12px; border: 1px solid #d1d4dc;
+            flex: 0 0 auto; width: 100%; padding: 7px 9px; border: 1px solid #cbd2df;
             border-radius: 6px; font-family: 'Courier New', Courier, monospace; 
             font-size: 16px; font-weight: 700; color: #131722; transition: all 0.2s;
+            background: #f8f9fd;
         }
         .input-group input:focus { outline: none; border-color: #2962FF; box-shadow: 0 0 0 2px rgba(41,98,255,0.1); }
 
         .margin-row {
-            display: flex;
-            gap: 18px;
-            padding-top: 20px;
-            border-top: 1px dashed #d1d4dc;
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.8fr) minmax(0, 1.4fr);
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e6ef;
             align-items: center;
         }
         
@@ -171,117 +187,77 @@
             background: #eef2ff; /* 浅蓝底色 */
             border: 2px solid #2962FF; /* 深蓝强调边框 */
             border-radius: 8px;
-            padding: 8px 20px;
-            font-size: 16px; 
+            padding: 8px 12px;
+            font-size: 14px;
             color: #2962FF; 
             font-weight: 800; 
             box-shadow: 0 4px 12px rgba(41, 98, 255, 0.15);
             display: flex;
             align-items: center;
-            gap: 12px;
-            letter-spacing: 0.5px;
+            justify-content: space-between;
+            gap: 8px;
+            letter-spacing: 0;
+            min-height: 42px;
+            width: 100%;
         }
         .lp-highlight span {
             color: #131722; /* 具体的数值用黑色强调 */
             font-family: 'Courier New', Courier, monospace;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         /* Right Side: Output text */
         .cg-right {
-            width: clamp(220px, 15vw, 280px); 
+            grid-area: result;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            flex-shrink: 0;
+            gap: 8px;
+            min-width: 0;
+            min-height: 0;
         }
         .output-area {
-            flex: 1; background: #f8f9fd; border: 1px solid #e0e3eb;
-            border-radius: 12px; padding: 20px; font-size: 15px; line-height: 1.8; 
+            flex: 1; background: #f8f9fd; border: 1px solid #dfe4ef;
+            border-radius: 9px; padding: 13px 14px; font-size: 15px; line-height: 1.65;
             resize: none; color: #131722; outline: none;
+            min-height: 0;
         }
         .btn-copy {
             background: #2962FF; color: #fff; border: none; border-radius: 8px;
-            padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+            padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer;
             transition: background 0.2s; flex-shrink: 0;
         }
         .btn-copy:hover { background: #1e53e5; }
 
-        @media (max-width: 1800px) {
-            .dashboard {
-                grid-template-columns: minmax(520px, 1fr) minmax(430px, 0.9fr);
-            }
+        .margin-row .input-group {
+            max-width: none !important;
+        }
 
+        @media (max-width: 1600px) {
             .cost-generator {
-                padding: 18px 22px;
-                gap: 16px;
+                padding: 14px;
             }
 
-            .cg-header {
-                padding-bottom: 12px;
-            }
-
-            .cg-header .links {
-                gap: 8px;
-            }
-
-            .cg-header .links a {
-                padding: 6px 12px;
-                font-size: 13px;
-            }
-
-            .ocr-row {
+            .cg-main {
+                grid-template-columns: minmax(0, 1.05fr) minmax(220px, 0.95fr);
                 gap: 10px;
             }
 
-            .ocr-row textarea {
-                height: 48px;
-            }
-
-            .btn-extract {
-                padding: 0 18px;
-            }
-
-            .control-card {
-                gap: 18px;
-            }
-
             .rates-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 14px 16px;
+                gap: 8px;
             }
 
             .input-group label {
-                width: 68px;
+                width: auto;
                 font-size: 13px;
             }
 
             .input-group input {
-                padding: 9px 10px;
-                font-size: 15px;
+                flex-basis: auto;
+                width: 100%;
             }
 
-            .margin-row {
-                gap: 14px;
-                padding-top: 16px;
-            }
-
-            .margin-row .input-group {
-                max-width: 150px !important;
-            }
-
-            .lp-highlight {
-                padding: 8px 14px;
-                gap: 10px;
-                font-size: 14px;
-            }
-
-            .lp-highlight span {
-                font-size: 16px;
-            }
-
-            .cg-right {
-                width: 230px;
+            .output-area {
+                padding: 14px;
             }
         }
 
@@ -364,13 +340,14 @@
             }
 
             .cg-main {
-                flex-direction: column;
-                gap: 16px;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                grid-template-areas:
+                    "ocr"
+                    "controls"
+                    "result";
+                gap: 14px;
                 min-height: auto;
-            }
-
-            .cg-left {
-                gap: 16px;
             }
 
             .ocr-row {
@@ -391,30 +368,31 @@
 
             .control-card {
                 padding: 16px;
-                gap: 18px;
+                gap: 12px;
+                grid-template-rows: auto auto;
             }
 
             .rates-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
             }
 
             .input-group label {
-                width: 76px;
+                width: auto;
                 text-align: left;
             }
 
             .margin-row {
-                flex-wrap: wrap;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 12px;
             }
 
             .margin-row .input-group {
                 max-width: none !important;
-                flex: 1 1 150px;
             }
 
             .lp-highlight {
+                grid-column: 1 / -1;
                 width: 100%;
                 margin-left: 0;
                 justify-content: space-between;
@@ -481,8 +459,18 @@
                 gap: 6px;
             }
 
+            .rates-grid,
+            .margin-row {
+                grid-template-columns: 1fr;
+            }
+
             .input-group label {
                 width: auto;
+            }
+
+            .input-group input {
+                width: 100%;
+                flex-basis: auto;
             }
 
             .lp-highlight {
@@ -497,7 +485,7 @@
 <div class="dashboard">
     <div class="panel">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {
           "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",
@@ -518,14 +506,13 @@
         </div>
 
         <div class="cg-main">
-            <div class="cg-left">
-                <div class="ocr-row">
+            <div class="ocr-row">
                     <textarea id="raw-text" placeholder="Paste OCR text here..."></textarea>
                     <button class="btn-extract" onclick="smartExtract()">Extract</button>
                     <button class="btn-clear" onclick="clearCostGenerator()">Clear</button>
                 </div>
 
-                <div class="control-card">
+            <div class="control-card">
                     <div class="rates-grid">
                         <div class="input-group"><label>USD/CNY</label><input type="text" id="v-renmei" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
                         <div class="input-group"><label>USDT/CNY</label><input type="text" id="v-renu" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
@@ -534,18 +521,17 @@
                         <div class="input-group"><label>USD/AUD</label><input type="text" id="v-usdaud" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
                     </div>
                     <div class="margin-row">
-                        <div class="input-group" style="max-width: 180px;"><label>POBO%</label><input type="text" id="m-pobo" value="0.4" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
-                        <div class="input-group" style="max-width: 180px;"><label>LP%</label><input type="text" id="m-lp" value="0.25" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>POBO%</label><input type="text" id="m-pobo" value="0.4" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>LP%</label><input type="text" id="m-lp" value="0.25" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
                         
                         <div class="lp-highlight" id="lp-hint">
                             LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
             <div class="cg-right">
-                <textarea class="output-area" id="output-box" readonly></textarea>
+                <textarea class="output-area" id="output-box" readonly placeholder="Generated cost summary will appear here."></textarea>
                 <button class="btn-copy" onclick="copyResult()">Copy Result</button>
             </div>
         </div>
@@ -554,7 +540,7 @@
 
     <div class="panel">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {
           "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",
@@ -566,7 +552,7 @@
 
     <div class="panel">
         <div class="tradingview-widget-container" style="height:100%;width:100%">
-          <div class="tradingview-widget-container__widget" style="height:calc(100% - 32px);width:100%"></div>
+          <div class="tradingview-widget-container__widget" style="height:100%;width:100%"></div>
           <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
           {
           "allow_symbol_change": true, "interval": "5", "timezone": "Australia/Sydney", "theme": "light", "style": "1", "locale": "en",

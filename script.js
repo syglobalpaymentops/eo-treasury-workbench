@@ -8,9 +8,9 @@ const title = document.getElementById("view-title");
 const openLink = document.getElementById("open-link");
 
 const titles = new Map([
-  ["./tools/payment-instruction-generator.html", "Payment Instruction"],
   ["./tools/fx-calculator.html", "FX Calculator"],
   ["./tools/bank-account-modify.html", "Bank Account Modify"],
+  ["./tools/payment-instruction-generator.html", "Payment Instruction"],
   ["./apps/commission/index.html", "Commission Settlement"],
 ]);
 

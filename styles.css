@@ -178,6 +178,22 @@ a {
   max-width: 980px;
 }
 
+.tool-card[data-src="./tools/fx-calculator.html"] {
+  order: 1;
+}
+
+.tool-card[data-src="./tools/bank-account-modify.html"] {
+  order: 2;
+}
+
+.tool-card[data-src="./tools/payment-instruction-generator.html"] {
+  order: 3;
+}
+
+.tool-card[data-src="./apps/commission/index.html"] {
+  order: 4;
+}
+
 .tool-card {
   min-height: 150px;
   border: 1px solid var(--line);
@@ -284,7 +300,8 @@ iframe {
   }
 
   iframe {
-    height: 78vh;
+    height: calc(100dvh - 230px);
+    min-height: 620px;
   }
 }
 
@@ -297,5 +314,15 @@ iframe {
   .toolbox-view,
   .topbar {
     padding: 18px;
+  }
+
+  .open-link,
+  .download-button {
+    width: 100%;
+  }
+
+  iframe {
+    height: calc(100dvh - 300px);
+    min-height: 560px;
   }
 }

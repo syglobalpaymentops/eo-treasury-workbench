@@ -4,9 +4,9 @@ This is a static workbench for GitHub Pages.
 
 ## Included
 
-- Payment Instruction Generator
 - FX Calculator
 - Bank Account Modify
+- Payment Instruction Generator
 - Commission Settlement
 - Toolbox download for Daily Folder Creator
 
