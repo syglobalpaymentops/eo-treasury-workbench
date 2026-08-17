@@ -5,7 +5,7 @@ const toolboxView = document.getElementById("toolbox-view");
 const frameView = document.getElementById("frame-view");
 const frame = document.getElementById("tool-frame");
 const title = document.getElementById("view-title");
-const openLink = document.getElementById("open-link");
+const fxQuickLinks = document.getElementById("fx-quick-links");
 
 const titles = new Map([
   ["./tools/fx-calculator.html", "FX Calculator"],
@@ -31,7 +31,7 @@ function showHome(target) {
   hideAllViews();
   homeView.hidden = false;
   title.textContent = "Overview";
-  openLink.hidden = true;
+  fxQuickLinks.hidden = true;
   frame.removeAttribute("src");
   setActive(target);
 }
@@ -40,7 +40,7 @@ function showToolbox(target) {
   hideAllViews();
   toolboxView.hidden = false;
   title.textContent = "Toolbox";
-  openLink.hidden = true;
+  fxQuickLinks.hidden = true;
   frame.removeAttribute("src");
   setActive(target);
 }
@@ -50,8 +50,8 @@ function showFrame(src, activeItem) {
   frameView.hidden = false;
   frame.src = src;
   title.textContent = titles.get(src) || "Tool";
-  openLink.href = src;
-  openLink.hidden = false;
+  const isFxCalculator = src === "./tools/fx-calculator.html";
+  fxQuickLinks.hidden = !isFxCalculator;
   setActive(activeItem || navItems.find((item) => item.dataset.src === src));
 }
 
