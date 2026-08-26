@@ -483,6 +483,27 @@
       return match ? cleanValue(match[1]) : "";
     }
 
+    const labelOnlyPattern = /^(姓名|客户会员号|住址|交易编号|起息日|银行交易编号|客户卖出货币|金额|汇率|客户买入货币|目的|收款账户|账户名|转账金额|账户号码|已收金额|开户行地址|收款人账户信息|收款人姓名|收款人银行|银行账号|银行国际代码|银行所在城市|应付金额|备注|Office Use only)$/i;
+
+    function valueAfterLabels(text, labels, stopLabels = []) {
+      const lines = text.split(/\n+/).map(cleanValue);
+      const labelSet = new Set(labels.map(label => label.toLowerCase()));
+      const stopSet = new Set(stopLabels.map(label => label.toLowerCase()));
+      for (let index = 0; index < lines.length; index++) {
+        const line = lines[index].replace(/:$/, "").trim();
+        if (!labelSet.has(line.toLowerCase())) continue;
+
+        for (let next = index + 1; next < lines.length; next++) {
+          const candidate = lines[next].replace(/:$/, "").trim();
+          if (!candidate) continue;
+          if (stopSet.has(candidate.toLowerCase())) break;
+          if (labelSet.has(candidate.toLowerCase()) || labelOnlyPattern.test(candidate)) continue;
+          return candidate;
+        }
+      }
+      return "";
+    }
+
     function pickBetween(text, startPattern, endPatterns) {
       const start = text.match(startPattern);
       if (!start) return "";
@@ -626,6 +647,9 @@
     }
 
     function parseBankName(text) {
+      const bankAfterLabel = valueAfterLabels(text, ["Beneficiary Bank", "收款人银行"], ["Beneficiary Account", "银行账号", "SWIFT Code", "银行国际代码", "Bank City", "银行所在城市"]);
+      if (bankAfterLabel) return titleCaseBank(bankAfterLabel);
+
       const beneficiaryBlock = pickBetween(text, /Beneficiary Bank\s*/i, [/Beneficiary Account/i, /SWIFT Code/i]);
       if (beneficiaryBlock) {
         const bankLine = beneficiaryBlock
@@ -696,17 +720,23 @@
     }
 
     function parseBankAddress(text, bankName) {
+      const cityAfterLabel = valueAfterLabels(text, ["Bank City", "银行所在城市"], ["Amount Payable", "应付金额", "Reference", "备注"]);
+      if (cityAfterLabel) return stripFieldTail(cityAfterLabel);
+
       const bankCityBlock = pickBetween(text, /Bank City\s*/i, [/Amount Payable/i]);
       if (bankCityBlock) {
         const cityLine = bankCityBlock
           .split(/\n+/)
           .map(cleanValue)
-          .find(line => /^[A-Za-z][A-Za-z .'-]{1,60}$/.test(line) && !/BANK|CITY/i.test(line));
+          .find(line => /^[A-Za-z][A-Za-z .,'-]{1,80}$/.test(line) && !/BANK|CITY/i.test(line));
         if (cityLine) return cityLine;
       }
 
+      const bankAddressAfterLabel = valueAfterLabels(text, ["Bank Address", "银行地址", "Bank Location", "开户行地址"], ["Beneficiary Account Information", "收款人账户信息", "Beneficiary name", "收款人姓名"]);
+      if (bankAddressAfterLabel) return stripFieldTail(bankAddressAfterLabel);
+
       const labeled = afterLabel(text, ["银行地址", "Bank Address", "Bank Location"]);
-      if (labeled) return stripFieldTail(labeled);
+      if (labeled && !labelOnlyPattern.test(labeled)) return stripFieldTail(labeled);
       const upperBank = (bankName || "").toUpperCase();
       if (/HANG SENG|STANDARD CHARTERED|HONG KONG|HK/.test(upperBank)) return "Hong Kong";
       if (/WESTPAC|COMMONWEALTH|NAB|ANZ|AUSTRALIA/.test(upperBank)) return "Sydney";
