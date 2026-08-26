@@ -483,6 +483,14 @@
       return match ? cleanValue(match[1]) : "";
     }
 
+    function afterLabelUntil(text, labels, stopLabels) {
+      const group = labels.map(escapeRegex).join("|");
+      const stops = stopLabels.map(escapeRegex).join("|");
+      const pattern = new RegExp("(?:^|\\n|\\s)(?:" + group + ")\\s*:?\\s*([\\s\\S]*?)(?=\\s+(?:" + stops + ")\\b|\\n(?:" + stops + ")\\b|$)", "i");
+      const match = text.match(pattern);
+      return match ? stripFieldTail(match[1]) : "";
+    }
+
     const labelOnlyPattern = /^(姓名|客户会员号|住址|交易编号|起息日|银行交易编号|客户卖出货币|金额|汇率|客户买入货币|目的|收款账户|账户名|转账金额|账户号码|已收金额|开户行地址|收款人账户信息|收款人姓名|收款人银行|银行账号|银行国际代码|银行所在城市|应付金额|备注|Office Use only)$/i;
 
     function valueAfterLabels(text, labels, stopLabels = []) {
@@ -557,8 +565,7 @@
       const labeled = afterLabel(text, ["BSB", "BSB Number", "BSB No"]);
       const value = labeled.match(/\d{3}[- ]?\d{3}/);
       if (value) return value[0].replace("-", " ");
-      const loose = text.match(/\b\d{3}[- ]\d{3}\b/);
-      return loose ? loose[0].replace("-", " ") : "";
+      return "";
     }
 
     function parseSwift(text) {
@@ -720,6 +727,9 @@
     }
 
     function parseBankAddress(text, bankName) {
+      const compactCity = afterLabelUntil(text, ["Bank City", "银行所在城市"], ["Amount Payable", "应付金额", "Reference", "备注"]);
+      if (compactCity) return compactCity;
+
       const cityAfterLabel = valueAfterLabels(text, ["Bank City", "银行所在城市"], ["Amount Payable", "应付金额", "Reference", "备注"]);
       if (cityAfterLabel) return stripFieldTail(cityAfterLabel);
 
@@ -746,6 +756,7 @@
     function stripFieldTail(value) {
       return cleanValue(value)
         .replace(/(收款人姓名|收款人银行|银行账号|银行国际代码|客户买入货币|银行所在城市|应付金额|住址)/gi, "")
+        .replace(/\b(Amount Payable|Reference|Client Buy Currency|Beneficiary Account|SWIFT Code)\b[\s\S]*$/i, "")
         .replace(/\s+(银行名称|账号|账户|SWIFT|BIC|银行地址|居住详细地址|公司详细地址|BSB)\s*:.*$/i, "")
         .replace(/\s{2,}/g, " ")
         .trim();
