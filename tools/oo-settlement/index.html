@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>USDT 结算复制</title>
+  <title>otc Settlement</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f3f6fb;
+      --bg: #f6f8f7;
       --panel: #ffffff;
       --ink: #172033;
       --muted: #647086;
@@ -15,9 +15,12 @@
       --accent: #136f63;
       --accent-strong: #0f5c52;
       --soft: #e7f4f1;
+      --surface: #f8fafc;
+      --surface-strong: #eef5f2;
       --danger: #9b2c2c;
       --ok: #0f6a4f;
       --note: #725b00;
+      --shadow: 0 16px 42px rgba(30, 43, 56, 0.08);
     }
 
     * {
@@ -33,21 +36,26 @@
     }
 
     main {
-      width: min(1080px, calc(100% - 32px));
-      margin: 30px auto;
+      width: min(1240px, calc(100% - 28px));
+      margin: 22px auto;
     }
 
     header {
       display: flex;
-      align-items: end;
+      align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f6f3 100%);
+      box-shadow: var(--shadow);
     }
 
     h1 {
       margin: 0;
-      font-size: 26px;
+      font-size: 28px;
       line-height: 1.2;
       letter-spacing: 0;
     }
@@ -60,13 +68,17 @@
 
     .mode {
       min-height: 34px;
-      padding: 8px 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 999px;
       background: #fff;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .mode.ready {
@@ -89,8 +101,8 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 18px;
+      grid-template-columns: minmax(390px, 0.9fr) minmax(560px, 1.1fr);
+      gap: 14px;
       align-items: start;
     }
 
@@ -98,22 +110,52 @@
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 8px;
-      box-shadow: 0 12px 32px rgba(36, 47, 75, 0.08);
+      box-shadow: var(--shadow);
     }
 
     .form,
     .output {
-      padding: 18px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title h2 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .panel-title span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
     }
 
     .dropzone {
-      min-height: 152px;
+      min-height: 120px;
       display: grid;
       place-items: center;
-      padding: 18px;
+      padding: 16px;
       border: 2px dashed #aeb8ca;
       border-radius: 8px;
-      background: #fbfcff;
+      background: var(--surface);
       color: var(--muted);
       text-align: center;
       cursor: pointer;
@@ -124,7 +166,7 @@
       display: block;
       margin-bottom: 7px;
       color: var(--ink);
-      font-size: 18px;
+      font-size: 17px;
     }
 
     .dropzone.is-dragging {
@@ -136,24 +178,39 @@
       display: none;
     }
 
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-top: 12px;
+    }
+
+    .field-grid label {
+      margin-top: 0;
+    }
+
+    .field-wide {
+      grid-column: 1 / -1;
+    }
+
     label {
       display: block;
       margin-top: 14px;
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
     }
 
     input {
       width: 100%;
-      height: 42px;
+      height: 40px;
       margin-top: 6px;
       padding: 9px 10px;
       border: 1px solid var(--line);
       border-radius: 6px;
       color: var(--ink);
       font: inherit;
-      background: #fff;
+      background: var(--surface);
     }
 
     input:focus {
@@ -161,19 +218,36 @@
       border-color: var(--accent);
     }
 
+    .input-suffix {
+      position: relative;
+    }
+
+    .input-suffix input {
+      padding-right: 34px;
+    }
+
+    .suffix {
+      position: absolute;
+      right: 11px;
+      bottom: 11px;
+      color: var(--muted);
+      font-weight: 800;
+      pointer-events: none;
+    }
+
     .summary {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-top: 16px;
+      margin-top: 12px;
     }
 
     .metric {
-      min-height: 76px;
+      min-height: 82px;
       padding: 12px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcff;
+      background: var(--surface-strong);
     }
 
     .metric span {
@@ -186,20 +260,24 @@
     .metric strong {
       display: block;
       margin-top: 7px;
-      font-size: 20px;
+      font-size: 21px;
       line-height: 1.2;
       word-break: break-word;
     }
 
     .crosscheck {
-      margin-top: 16px;
-      padding-top: 2px;
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
     }
 
     .crosscheck textarea {
-      min-height: 190px;
+      min-height: 142px;
       font-size: 13px;
       line-height: 1.45;
+      background: #fff;
     }
 
     .text-parse {
@@ -209,15 +287,15 @@
 
     .check-list {
       display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
       margin-top: 10px;
     }
 
     .check-row {
       display: grid;
-      grid-template-columns: 72px 1fr;
-      gap: 8px;
-      min-height: 36px;
+      gap: 4px;
+      min-height: 60px;
       align-items: center;
       padding: 8px 10px;
       border: 1px solid var(--line);
@@ -252,18 +330,37 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+    }
+
+    .message-block {
+      margin-bottom: 12px;
+    }
+
+    .message-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .message-bar span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
     }
 
     .copy-panels {
       display: grid;
-      grid-template-columns: 220px 1fr;
+      grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 0.7fr);
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .copy-panel {
-      min-height: 92px;
+      min-height: 98px;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 10px;
@@ -271,7 +368,7 @@
       padding: 12px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: #fbfcff;
+      background: var(--surface);
     }
 
     .copy-panel span {
@@ -284,7 +381,7 @@
     .copy-panel strong {
       display: block;
       margin-top: 6px;
-      font-size: 20px;
+      font-size: 22px;
       line-height: 1.25;
       word-break: break-all;
     }
@@ -307,13 +404,28 @@
       border-color: #bee3dc;
     }
 
+    a.shortcut {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 13px;
+      border: 1px solid #bee3dc;
+      border-radius: 6px;
+      background: var(--soft);
+      color: var(--accent-strong);
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
     button:hover {
       filter: brightness(0.96);
     }
 
     textarea {
       width: 100%;
-      min-height: 330px;
+      min-height: 382px;
       resize: vertical;
       padding: 16px;
       border: 1px solid var(--line);
@@ -325,13 +437,17 @@
     }
 
     .status {
-      min-height: 22px;
+      min-height: 32px;
       margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--surface-strong);
       color: var(--ok);
       font-size: 14px;
     }
 
     .status.error {
+      background: #fff7f7;
       color: var(--danger);
     }
 
@@ -353,8 +469,17 @@
         grid-template-columns: 1fr;
       }
 
+      .field-grid,
+      .check-list {
+        grid-template-columns: 1fr;
+      }
+
       .copy-panels {
         grid-template-columns: 1fr;
+      }
+
+      .action-row {
+        justify-content: flex-start;
       }
     }
   </style>
@@ -363,14 +488,25 @@
   <main>
     <header>
       <div>
-        <h1>USDT 结算复制</h1>
+        <h1>otc Settlement</h1>
         <div class="source" id="source">拖入 PDF 或粘贴后台文本，任意一个来源即可生成</div>
       </div>
-      <div class="mode" id="mode">等待信息源</div>
+      <div class="action-row">
+        <a class="shortcut" href="https://tronscan.org/" target="_blank" rel="noreferrer">Tron</a>
+        <button type="button" class="secondary" id="clearButton">清除所有信息</button>
+        <div class="mode" id="mode">等待信息源</div>
+      </div>
     </header>
 
     <div class="layout">
       <section class="form" aria-label="结算参数">
+        <div class="panel-title">
+          <div>
+            <span>Source</span>
+            <h2>识别与录入</h2>
+          </div>
+        </div>
+
         <div class="dropzone" id="dropzone" tabindex="0" role="button">
           <div>
             <strong>拖 PDF 到这里</strong>
@@ -379,25 +515,33 @@
         </div>
         <input id="pdfFile" type="file" accept="application/pdf,.pdf">
 
-        <label for="customer">客户</label>
-        <input id="customer" value="">
+        <div class="field-grid" aria-label="结算字段">
+          <label for="customer">客户
+            <input id="customer" value="">
+          </label>
 
-        <label for="amount">USD 金额</label>
-        <input id="amount" inputmode="decimal" value="">
+          <label for="amount">USD 金额
+            <input id="amount" inputmode="decimal" value="">
+          </label>
 
-        <label for="rate">USD to USDT 汇率</label>
-        <input id="rate" inputmode="decimal" value="0.9950">
+          <label for="rate">USD to USDT 汇率
+            <input id="rate" inputmode="decimal" value="0.9950">
+          </label>
 
-        <label for="charge">Bank charges</label>
-        <input id="charge" inputmode="decimal" value="5">
+          <label class="input-suffix" for="charge">Bank charges
+            <input id="charge" inputmode="decimal" value="5">
+            <span class="suffix">%</span>
+          </label>
 
-        <label for="wallet">客户钱包地址</label>
-        <input id="wallet" value="">
+          <label class="field-wide" for="wallet">客户钱包地址
+            <input id="wallet" value="">
+          </label>
+        </div>
 
         <div class="crosscheck">
-          <label for="crossText">后台文本 cross check</label>
+          <label for="crossText">文字版信息识别</label>
           <textarea id="crossText" spellcheck="false" placeholder="把后台表格/文字粘贴到这里，会自动对比客户、金额、钱包地址"></textarea>
-          <button type="button" class="secondary text-parse" id="parseTextButton">识别后台文本</button>
+          <button type="button" class="secondary text-parse" id="parseTextButton">识别文字版信息</button>
           <div class="check-list" aria-label="cross check 结果">
             <div class="check-row empty" id="checkCustomer"><strong>客户</strong><span>等待粘贴</span></div>
             <div class="check-row empty" id="checkAmount"><strong>金额</strong><span>等待粘贴</span></div>
@@ -418,28 +562,37 @@
       </section>
 
       <section class="output" aria-label="结算文案">
+        <div class="panel-title">
+          <div>
+            <span>Result</span>
+            <h2>复制结果</h2>
+          </div>
+        </div>
+
+        <div class="message-block">
+          <div class="message-bar">
+            <span>生成的文本</span>
+            <button type="button" data-copy="text">复制全文</button>
+          </div>
+          <textarea id="message" spellcheck="false"></textarea>
+        </div>
+
         <div class="copy-panels">
           <div class="copy-panel">
             <div>
-              <span>单独转账金额</span>
-              <strong id="copyAmountValue">0.00</strong>
-            </div>
-            <button type="button" class="secondary" data-copy="amount">复制</button>
-          </div>
-          <div class="copy-panel">
-            <div>
-              <span>单独钱包地址</span>
+              <span>钱包地址</span>
               <strong id="copyWalletValue">-</strong>
             </div>
             <button type="button" class="secondary" data-copy="wallet">复制</button>
           </div>
+          <div class="copy-panel">
+            <div>
+              <span>转账金额</span>
+              <strong id="copyAmountValue">0.00</strong>
+            </div>
+            <button type="button" class="secondary" data-copy="amount">复制</button>
+          </div>
         </div>
-
-        <div class="toolbar">
-          <button type="button" data-copy="text">复制全文</button>
-        </div>
-
-        <textarea id="message" spellcheck="false"></textarea>
         <div class="status" id="status" role="status" aria-live="polite"></div>
       </section>
     </div>
@@ -467,6 +620,7 @@
       mode: document.querySelector("#mode"),
       dropzone: document.querySelector("#dropzone"),
       pdfFile: document.querySelector("#pdfFile"),
+      clearButton: document.querySelector("#clearButton"),
       crossText: document.querySelector("#crossText"),
       parseTextButton: document.querySelector("#parseTextButton"),
       checkCustomer: document.querySelector("#checkCustomer"),
@@ -711,8 +865,8 @@
         const matches = check.normalize(check.pdf) === check.normalize(check.pasted);
         if (!matches) allMatched = false;
         const detail = matches
-          ? `一致：${check.pasted}`
-          : `不一致：PDF=${check.pdf} / 后台=${check.pasted}`;
+          ? "信息一致"
+          : `不一致：PDF=${check.pdf} / 文字=${check.pasted}`;
         setCheck(check.row, matches ? "match" : "mismatch", detail);
       });
 
@@ -776,8 +930,8 @@ ${fields.wallet.value.trim()}
     function handleCrossTextInput() {
       sourceData.text = parseCrosscheckText(fields.crossText.value);
       if (!hasCoreData(sourceData.pdf) && hasCoreData(sourceData.text)) {
-        applySource(sourceData.text, "后台文本");
-        setStatus("已从后台文本生成文案。");
+        applySource(sourceData.text, "文字版信息");
+        setStatus("已从文字版信息生成文案。");
         return;
       }
       if (!hasCoreData(sourceData.pdf) && fields.crossText.value.trim()) {
@@ -785,10 +939,25 @@ ${fields.wallet.value.trim()}
         setCheck(fields.checkCustomer, "empty", "未识别到客户");
         setCheck(fields.checkAmount, "empty", "未识别到金额");
         setCheck(fields.checkWallet, "empty", "未识别到地址");
-        setStatus("后台文本里没有识别到客户、金额或钱包地址。", true);
+        setStatus("文字版信息里没有识别到客户、金额或钱包地址。", true);
         return;
       }
       updateCrosscheck();
+    }
+
+    function clearAll() {
+      sourceData.pdf = {};
+      sourceData.text = {};
+      fields.customer.value = "";
+      fields.amount.value = "";
+      fields.rate.value = "0.9950";
+      fields.charge.value = "5";
+      fields.wallet.value = "";
+      fields.crossText.value = "";
+      fields.pdfFile.value = "";
+      fields.source.textContent = "拖入 PDF 或粘贴后台文本，任意一个来源即可生成";
+      setStatus("已清除，可以开始下一单。");
+      build();
     }
 
     async function copyValue(kind) {
@@ -816,6 +985,7 @@ ${fields.wallet.value.trim()}
       if (event.key === "Enter" || event.key === " ") fields.pdfFile.click();
     });
     fields.pdfFile.addEventListener("change", () => parsePdf(fields.pdfFile.files[0]));
+    fields.clearButton.addEventListener("click", clearAll);
 
     ["dragenter", "dragover"].forEach((eventName) => {
       fields.dropzone.addEventListener(eventName, (event) => {
