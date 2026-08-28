@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>USDT 结算复制</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f6fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #647086;
+      --line: #d9dfeb;
+      --accent: #136f63;
+      --accent-strong: #0f5c52;
+      --soft: #e7f4f1;
+      --danger: #9b2c2c;
+      --ok: #0f6a4f;
+      --note: #725b00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    main {
+      width: min(1080px, calc(100% - 32px));
+      margin: 30px auto;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .source {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .mode {
+      min-height: 34px;
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .mode.ready {
+      border-color: #a7d9c9;
+      background: #f0faf6;
+      color: var(--ok);
+    }
+
+    .mode.checking {
+      border-color: #d4c074;
+      background: #fffbea;
+      color: var(--note);
+    }
+
+    .mode.error {
+      border-color: #e3aaaa;
+      background: #fff7f7;
+      color: var(--danger);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 12px 32px rgba(36, 47, 75, 0.08);
+    }
+
+    .form,
+    .output {
+      padding: 18px;
+    }
+
+    .dropzone {
+      min-height: 152px;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      border: 2px dashed #aeb8ca;
+      border-radius: 8px;
+      background: #fbfcff;
+      color: var(--muted);
+      text-align: center;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    .dropzone strong {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    .dropzone.is-dragging {
+      border-color: var(--accent);
+      background: var(--soft);
+    }
+
+    #pdfFile {
+      display: none;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      height: 42px;
+      margin-top: 6px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      font: inherit;
+      background: #fff;
+    }
+
+    input:focus {
+      outline: 2px solid rgba(19, 111, 99, 0.25);
+      border-color: var(--accent);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .metric {
+      min-height: 76px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 20px;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .crosscheck {
+      margin-top: 16px;
+      padding-top: 2px;
+    }
+
+    .crosscheck textarea {
+      min-height: 190px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .text-parse {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .check-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .check-row {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 8px;
+      min-height: 36px;
+      align-items: center;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .check-row strong {
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .check-row.match {
+      border-color: #a7d9c9;
+      background: #f0faf6;
+      color: var(--ok);
+    }
+
+    .check-row.mismatch {
+      border-color: #e3aaaa;
+      background: #fff7f7;
+      color: var(--danger);
+    }
+
+    .check-row.empty {
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .copy-panels {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .copy-panel {
+      min-height: 92px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcff;
+    }
+
+    .copy-panel span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .copy-panel strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 20px;
+      line-height: 1.25;
+      word-break: break-all;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 9px 13px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: var(--soft);
+      color: var(--accent-strong);
+      border-color: #bee3dc;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 330px;
+      resize: vertical;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #111827;
+      background: #fbfcff;
+      font: 17px/1.65 Consolas, "Microsoft YaHei", monospace;
+      white-space: pre-wrap;
+    }
+
+    .status {
+      min-height: 22px;
+      margin-top: 10px;
+      color: var(--ok);
+      font-size: 14px;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 820px) {
+      main {
+        width: min(100% - 20px, 1080px);
+        margin: 16px auto;
+      }
+
+      header {
+        display: block;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        grid-template-columns: 1fr;
+      }
+
+      .copy-panels {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>USDT 结算复制</h1>
+        <div class="source" id="source">拖入 PDF 或粘贴后台文本，任意一个来源即可生成</div>
+      </div>
+      <div class="mode" id="mode">等待信息源</div>
+    </header>
+
+    <div class="layout">
+      <section class="form" aria-label="结算参数">
+        <div class="dropzone" id="dropzone" tabindex="0" role="button">
+          <div>
+            <strong>拖 PDF 到这里</strong>
+            <span>也可以点击选择文件，识别后自动填入客户、金额、钱包地址</span>
+          </div>
+        </div>
+        <input id="pdfFile" type="file" accept="application/pdf,.pdf">
+
+        <label for="customer">客户</label>
+        <input id="customer" value="">
+
+        <label for="amount">USD 金额</label>
+        <input id="amount" inputmode="decimal" value="">
+
+        <label for="rate">USD to USDT 汇率</label>
+        <input id="rate" inputmode="decimal" value="0.9950">
+
+        <label for="charge">Bank charges</label>
+        <input id="charge" inputmode="decimal" value="5">
+
+        <label for="wallet">客户钱包地址</label>
+        <input id="wallet" value="">
+
+        <div class="crosscheck">
+          <label for="crossText">后台文本 cross check</label>
+          <textarea id="crossText" spellcheck="false" placeholder="把后台表格/文字粘贴到这里，会自动对比客户、金额、钱包地址"></textarea>
+          <button type="button" class="secondary text-parse" id="parseTextButton">识别后台文本</button>
+          <div class="check-list" aria-label="cross check 结果">
+            <div class="check-row empty" id="checkCustomer"><strong>客户</strong><span>等待粘贴</span></div>
+            <div class="check-row empty" id="checkAmount"><strong>金额</strong><span>等待粘贴</span></div>
+            <div class="check-row empty" id="checkWallet"><strong>地址</strong><span>等待粘贴</span></div>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="metric">
+            <span>转U金额</span>
+            <strong id="settlementAmount">0.00</strong>
+          </div>
+          <div class="metric">
+            <span>公式</span>
+            <strong id="formula">0 * 0.9950 * 0.95</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="output" aria-label="结算文案">
+        <div class="copy-panels">
+          <div class="copy-panel">
+            <div>
+              <span>单独转账金额</span>
+              <strong id="copyAmountValue">0.00</strong>
+            </div>
+            <button type="button" class="secondary" data-copy="amount">复制</button>
+          </div>
+          <div class="copy-panel">
+            <div>
+              <span>单独钱包地址</span>
+              <strong id="copyWalletValue">-</strong>
+            </div>
+            <button type="button" class="secondary" data-copy="wallet">复制</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" data-copy="text">复制全文</button>
+        </div>
+
+        <textarea id="message" spellcheck="false"></textarea>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    const fields = {
+      customer: document.querySelector("#customer"),
+      amount: document.querySelector("#amount"),
+      rate: document.querySelector("#rate"),
+      charge: document.querySelector("#charge"),
+      wallet: document.querySelector("#wallet"),
+      message: document.querySelector("#message"),
+      settlementAmount: document.querySelector("#settlementAmount"),
+      copyAmountValue: document.querySelector("#copyAmountValue"),
+      copyWalletValue: document.querySelector("#copyWalletValue"),
+      formula: document.querySelector("#formula"),
+      status: document.querySelector("#status"),
+      source: document.querySelector("#source"),
+      mode: document.querySelector("#mode"),
+      dropzone: document.querySelector("#dropzone"),
+      pdfFile: document.querySelector("#pdfFile"),
+      crossText: document.querySelector("#crossText"),
+      parseTextButton: document.querySelector("#parseTextButton"),
+      checkCustomer: document.querySelector("#checkCustomer"),
+      checkAmount: document.querySelector("#checkAmount"),
+      checkWallet: document.querySelector("#checkWallet"),
+    };
+
+    const sourceData = {
+      pdf: {},
+      text: {},
+    };
+
+    const parseNumber = (value) => Number(String(value).replace(/,/g, "").trim()) || 0;
+    const money = (value) => value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    const amountText = (value) => value.toLocaleString("en-US", {
+      maximumFractionDigits: 2,
+    });
+
+    function setStatus(text, error = false) {
+      fields.status.textContent = text;
+      fields.status.classList.toggle("error", error);
+    }
+
+    function setMode(text, state = "") {
+      fields.mode.textContent = text;
+      fields.mode.classList.remove("ready", "checking", "error");
+      if (state) fields.mode.classList.add(state);
+    }
+
+    function cleanLabel(label) {
+      return label.replace(/\*/g, "").replace(/\\/g, "").trim().toLowerCase();
+    }
+
+    function cleanValue(value) {
+      return value.replace(/\\/g, "").replace(/\*\*/g, "").trim();
+    }
+
+    function captureLineValue(text, labels, valuePattern = "(.+)") {
+      for (const label of labels) {
+        const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const pattern = new RegExp(`(?:^|\\n)\\s*(?:\\*\\*)?${escaped}(?:\\*\\*)?\\s*(?:[:：|-])?\\s*${valuePattern}`, "i");
+        const match = text.match(pattern);
+        if (match && cleanValue(match[1])) return cleanValue(match[1]);
+      }
+      return "";
+    }
+
+    function cleanAmount(value) {
+      return cleanValue(value).replace(/[^\d.,-]/g, "");
+    }
+
+    function parseReceiptText(text) {
+      const customer = captureLineValue(text, ["Name", "Customer", "客户", "客户名"], "([^|\\n]+)");
+      const amount = cleanAmount(captureLineValue(text, ["Amount", "USD Amount", "USD 金额", "金额"], "([A-Z$¥\\s]*[\\d,]+(?:\\.\\d+)?)"));
+      const wallet = captureLineValue(text, ["Wallet Address", "客户钱包地址", "钱包地址", "Address"], "(T[A-Za-z0-9]{20,})")
+        || ((text.match(/\bT[A-Za-z0-9]{20,}\b/) || [])[0] || "");
+      const transactionNo = captureLineValue(text, ["Transaction No.", "Transaction No", "Transaction ID", "交易号"], "([^|\\n]+)");
+
+      const missing = [];
+      if (!customer) missing.push("客户");
+      if (!amount) missing.push("金额");
+      if (!wallet) missing.push("钱包地址");
+      if (missing.length) {
+        throw new Error("无法识别：" + missing.join("、"));
+      }
+
+      return { customer, amount, wallet, transactionNo };
+    }
+
+    async function readPdfText(file) {
+      if (!window.pdfjsLib) {
+        throw new Error("PDF 识别组件没有加载成功，请刷新页面后再试。");
+      }
+
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const lines = [];
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const content = await page.getTextContent();
+        const items = content.items
+          .filter((item) => item.str && item.str.trim())
+          .map((item) => ({
+            text: item.str.trim(),
+            x: item.transform[4],
+            y: Math.round(item.transform[5] / 3) * 3,
+          }))
+          .sort((a, b) => (b.y === a.y ? a.x - b.x : b.y - a.y));
+
+        let currentY = null;
+        let currentLine = [];
+        items.forEach((item) => {
+          if (currentY === null || Math.abs(currentY - item.y) <= 3) {
+            currentLine.push(item.text);
+            currentY = item.y;
+            return;
+          }
+          lines.push(currentLine.join(" "));
+          currentLine = [item.text];
+          currentY = item.y;
+        });
+        if (currentLine.length) lines.push(currentLine.join(" "));
+      }
+
+      return lines.join("\n");
+    }
+
+    function parseCrosscheckText(text) {
+      const rows = text.split(/\r?\n/);
+      const parsed = {};
+
+      rows.forEach((row) => {
+        if (!row.includes("|")) return;
+        const cells = row.split("|").map((cell) => cell.trim()).filter(Boolean);
+        for (let index = 0; index < cells.length - 1; index += 2) {
+          const label = cleanLabel(cells[index]);
+          const value = cleanValue(cells[index + 1] || "");
+          if (["customer", "客户", "name", "客户名"].includes(label)) parsed.customer = value;
+          if (["amount", "金额", "usd amount", "usd 金额"].includes(label)) parsed.amount = value;
+          if (["wallet address", "客户钱包地址", "钱包地址", "address"].includes(label)) parsed.wallet = value;
+        }
+      });
+
+      if (!parsed.customer) {
+        parsed.customer = captureLineValue(text, ["Customer", "客户", "Name", "客户名"], "([^|\\n]+)");
+      }
+      if (!parsed.amount) {
+        parsed.amount = captureLineValue(text, ["Amount", "金额", "USD Amount", "USD 金额"], "([\\d,]+(?:\\.\\d+)?)");
+      }
+      if (!parsed.wallet) {
+        parsed.wallet = captureLineValue(text, ["Wallet Address", "客户钱包地址", "钱包地址", "Address"], "(T[A-Za-z0-9]{20,})");
+      }
+
+      const walletMatch = text.match(/\bT[A-Za-z0-9]{20,}\b/);
+      if (!parsed.wallet && walletMatch) parsed.wallet = walletMatch[0];
+
+      const amountCandidates = [...text.matchAll(/\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b|\b\d{4,}(?:\.\d+)?\b/g)]
+        .map((match) => match[0])
+        .filter((value) => {
+          const number = parseNumber(value);
+          if (number < 100) return false;
+          if (/^20\d{2}$/.test(value)) return false;
+          if (number === 100) return false;
+          return true;
+        });
+      if (!parsed.amount && amountCandidates.length) parsed.amount = amountCandidates[0];
+
+      return parsed;
+    }
+
+    function hasCoreData(data) {
+      return Boolean(data.customer || data.amount || data.wallet);
+    }
+
+    function applySource(data, sourceName) {
+      if (data.customer) fields.customer.value = data.customer;
+      if (data.amount) fields.amount.value = data.amount;
+      if (data.wallet) fields.wallet.value = data.wallet;
+      fields.source.textContent = sourceName;
+      build();
+    }
+
+    function normalizeName(value) {
+      return cleanValue(value).replace(/\s+/g, " ").toUpperCase();
+    }
+
+    function normalizeAmount(value) {
+      return parseNumber(value).toFixed(2);
+    }
+
+    function normalizeWallet(value) {
+      return cleanValue(value).replace(/\s+/g, "");
+    }
+
+    function setCheck(row, state, text) {
+      row.classList.remove("match", "mismatch", "empty");
+      row.classList.add(state);
+      row.querySelector("span").textContent = text;
+    }
+
+    function updateCrosscheck() {
+      const hasPdf = hasCoreData(sourceData.pdf);
+      const hasText = hasCoreData(sourceData.text);
+
+      if (!hasPdf && !hasText) {
+        setCheck(fields.checkCustomer, "empty", "等待粘贴");
+        setCheck(fields.checkAmount, "empty", "等待粘贴");
+        setCheck(fields.checkWallet, "empty", "等待粘贴");
+        setMode("等待信息源");
+        return;
+      }
+
+      if (!(hasPdf && hasText)) {
+        setCheck(fields.checkCustomer, "empty", "单来源模式");
+        setCheck(fields.checkAmount, "empty", "单来源模式");
+        setCheck(fields.checkWallet, "empty", "单来源模式");
+        setMode("单来源已生成", "ready");
+        return;
+      }
+
+      let allMatched = true;
+      const checks = [
+        {
+          row: fields.checkCustomer,
+          label: "客户",
+          pdf: sourceData.pdf.customer,
+          pasted: sourceData.text.customer,
+          normalize: normalizeName,
+        },
+        {
+          row: fields.checkAmount,
+          label: "金额",
+          pdf: sourceData.pdf.amount,
+          pasted: sourceData.text.amount,
+          normalize: normalizeAmount,
+        },
+        {
+          row: fields.checkWallet,
+          label: "地址",
+          pdf: sourceData.pdf.wallet,
+          pasted: sourceData.text.wallet,
+          normalize: normalizeWallet,
+        },
+      ];
+
+      checks.forEach((check) => {
+        if (!check.pasted) {
+          setCheck(check.row, "empty", `后台文本未识别到${check.label}`);
+          allMatched = false;
+          return;
+        }
+        if (!check.pdf) {
+          setCheck(check.row, "empty", `PDF 尚未识别${check.label}`);
+          allMatched = false;
+          return;
+        }
+
+        const matches = check.normalize(check.pdf) === check.normalize(check.pasted);
+        if (!matches) allMatched = false;
+        const detail = matches
+          ? `一致：${check.pasted}`
+          : `不一致：PDF=${check.pdf} / 后台=${check.pasted}`;
+        setCheck(check.row, matches ? "match" : "mismatch", detail);
+      });
+
+      setMode(allMatched ? "双来源 cross check 一致" : "双来源 cross check 不一致", allMatched ? "ready" : "error");
+    }
+
+    function build() {
+      const amount = parseNumber(fields.amount.value);
+      const rate = parseNumber(fields.rate.value);
+      const charge = parseNumber(fields.charge.value);
+      const multiplier = 1 - charge / 100;
+      const settlement = amount * rate * multiplier;
+      const settlementFormatted = money(settlement);
+      const amountFormatted = amountText(amount);
+      const rateFormatted = rate.toFixed(4);
+
+      fields.settlementAmount.textContent = settlementFormatted;
+      fields.copyAmountValue.textContent = settlementFormatted;
+      fields.copyWalletValue.textContent = fields.wallet.value.trim() || "-";
+      fields.formula.textContent = `${amountFormatted} * ${rateFormatted} * ${multiplier.toFixed(2)}`;
+      fields.message.value = `------------------------
+【客户 - ${fields.customer.value.trim()} 】
+
+今日 USD to USDT 汇率 = ${rate}
+
+今日实际支付客户金额如下：
+${amountFormatted} * ${rateFormatted} - ${charge}% bank charges = ${settlementFormatted}
+
+客户钱包地址如下：
+${fields.wallet.value.trim()}
+------------------------`;
+      updateCrosscheck();
+    }
+
+    async function parsePdf(file) {
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith(".pdf")) {
+        setStatus("请拖入 PDF 文件。", true);
+        return;
+      }
+
+      setStatus("正在识别 PDF...");
+      setMode("正在识别 PDF", "checking");
+
+      try {
+        const text = await readPdfText(file);
+        const data = parseReceiptText(text);
+
+        sourceData.pdf = {
+          customer: data.customer || "",
+          amount: data.amount || "",
+          wallet: data.wallet || "",
+        };
+        applySource(sourceData.pdf, `${file.name}${data.transactionNo ? " / 交易号 " + data.transactionNo : ""}`);
+        setStatus("已识别并生成文案。");
+      } catch (error) {
+        setStatus(error.message || "识别失败。", true);
+      }
+    }
+
+    function handleCrossTextInput() {
+      sourceData.text = parseCrosscheckText(fields.crossText.value);
+      if (!hasCoreData(sourceData.pdf) && hasCoreData(sourceData.text)) {
+        applySource(sourceData.text, "后台文本");
+        setStatus("已从后台文本生成文案。");
+        return;
+      }
+      if (!hasCoreData(sourceData.pdf) && fields.crossText.value.trim()) {
+        setMode("文本未识别", "error");
+        setCheck(fields.checkCustomer, "empty", "未识别到客户");
+        setCheck(fields.checkAmount, "empty", "未识别到金额");
+        setCheck(fields.checkWallet, "empty", "未识别到地址");
+        setStatus("后台文本里没有识别到客户、金额或钱包地址。", true);
+        return;
+      }
+      updateCrosscheck();
+    }
+
+    async function copyValue(kind) {
+      build();
+      const values = {
+        text: fields.message.value,
+        amount: fields.settlementAmount.textContent,
+        wallet: fields.wallet.value.trim(),
+      };
+
+      try {
+        await navigator.clipboard.writeText(values[kind]);
+        const labels = { text: "全文", amount: "转U金额", wallet: "钱包地址" };
+        setStatus(`已复制${labels[kind]}。`);
+      } catch {
+        fields.message.focus();
+        fields.message.select();
+        document.execCommand("copy");
+        setStatus("已选中文案，可按 Ctrl+C 复制。");
+      }
+    }
+
+    fields.dropzone.addEventListener("click", () => fields.pdfFile.click());
+    fields.dropzone.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") fields.pdfFile.click();
+    });
+    fields.pdfFile.addEventListener("change", () => parsePdf(fields.pdfFile.files[0]));
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      fields.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        fields.dropzone.classList.add("is-dragging");
+      });
+    });
+    ["dragleave", "drop"].forEach((eventName) => {
+      fields.dropzone.addEventListener(eventName, (event) => {
+        event.preventDefault();
+        fields.dropzone.classList.remove("is-dragging");
+      });
+    });
+    fields.dropzone.addEventListener("drop", (event) => parsePdf(event.dataTransfer.files[0]));
+
+    document.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("input", build);
+    });
+    fields.crossText.addEventListener("input", handleCrossTextInput);
+    fields.parseTextButton.addEventListener("click", handleCrossTextInput);
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", () => copyValue(button.dataset.copy));
+    });
+
+    build();
+  </script>
+</body>
+</html>

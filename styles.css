@@ -229,8 +229,12 @@ a {
   order: 3;
 }
 
-.tool-card[data-src="./apps/commission/index.html"] {
+.tool-card[data-src="./tools/oo-settlement/index.html"] {
   order: 4;
+}
+
+.tool-card[data-src="./apps/commission/index.html"] {
+  order: 5;
 }
 
 .tool-card {

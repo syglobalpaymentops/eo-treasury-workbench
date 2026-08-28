@@ -11,6 +11,7 @@ const titles = new Map([
   ["./tools/fx-calculator.html", "FX Calculator"],
   ["./tools/bank-account-modify.html", "Bank Account Modify"],
   ["./tools/payment-instruction-generator.html", "Payment Instruction"],
+  ["./tools/oo-settlement/index.html", "OO Settlement"],
   ["./apps/commission/index.html", "Commission Settlement"],
 ]);
 

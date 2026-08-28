@@ -7,6 +7,7 @@ This is a static workbench for GitHub Pages.
 - FX Calculator
 - Bank Account Modify
 - Payment Instruction Generator
+- OO Settlement
 - Commission Settlement
 - Toolbox download for Daily Folder Creator
 
