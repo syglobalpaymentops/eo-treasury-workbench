@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>otc Settlement</title>
+  <title>OTC Settlement</title>
   <style>
     :root {
       color-scheme: light;
@@ -354,13 +354,13 @@
 
     .copy-panels {
       display: grid;
-      grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 0.7fr);
+      grid-template-columns: 1fr;
       gap: 10px;
       margin-bottom: 12px;
     }
 
     .copy-panel {
-      min-height: 98px;
+      min-height: 112px;
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 10px;
@@ -380,10 +380,14 @@
 
     .copy-panel strong {
       display: block;
-      margin-top: 6px;
-      font-size: 22px;
+      margin-top: 8px;
+      font-size: 28px;
       line-height: 1.25;
       word-break: break-all;
+    }
+
+    .copy-panel:first-child strong {
+      font-size: 24px;
     }
 
     button {
@@ -488,7 +492,7 @@
   <main>
     <header>
       <div>
-        <h1>otc Settlement</h1>
+        <h1>OTC Settlement</h1>
         <div class="source" id="source">拖入 PDF 或粘贴后台文本，任意一个来源即可生成</div>
       </div>
       <div class="action-row">
