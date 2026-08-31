@@ -323,26 +323,43 @@
       return digits.replace(/(.{4})/g, "$1 ").trim();
     }
 
+    function extractCardCandidate(value) {
+      const spaced = (value || "").match(/\d{4}(?:[\s-]+\d{4}){2,4}/);
+      if (spaced) {
+        const digits = spaced[0].replace(/\D/g, "");
+        if (digits.length >= 12 && digits.length <= 19) return digits;
+      }
+
+      const compact = (value || "").match(/(?:^|\D)(\d{12,19})(?:\D|$)/);
+      return compact ? compact[1] : "";
+    }
+
     function findCard(text) {
       const labeled = afterLabel(text, ["银行卡号", "银行账号", "卡号", "账号", "账户", "帐号"]);
-      const labeledDigits = labeled.replace(/\D/g, "");
-      if (labeledDigits.length >= 10) return formatCard(labeledDigits);
-
-      const compact = text.replace(/[\s-]/g, "");
-      const matches = compact.match(/\d{12,23}/g) || [];
-      if (matches.length) return formatCard(matches[0]);
+      const labeledDigits = extractCardCandidate(labeled);
+      if (labeledDigits) return formatCard(labeledDigits);
 
       const numberLine = text
         .split(/\n+/)
         .map(line => line.trim())
-        .find(line => /^\d[\d\s-]{8,}\d$/.test(line) && !/[万wW]|RMB|人民币|额度|金额|限额|安排|入/i.test(line));
-      return numberLine ? formatCard(numberLine) : "";
+        .map(line => extractCardCandidate(line))
+        .find(Boolean);
+      if (numberLine) return formatCard(numberLine);
+
+      const compactLines = text
+        .split(/\n+/)
+        .map(line => extractCardCandidate(line.replace(/[\s-]/g, "")))
+        .find(Boolean);
+      return compactLines ? formatCard(compactLines) : "";
     }
 
     function findName(text, card) {
       const labeled = afterLabel(text, ["户名", "姓名", "收款人", "持卡人", "客户名", "名字"]);
       const labeledName = firstChineseName(labeled);
       if (labeledName) return labeledName;
+
+      const inlineBankName = findInlineNameBeforeBank(text);
+      if (inlineBankName) return inlineBankName;
 
       const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
       const cardDigits = card.replace(/\D/g, "");
@@ -351,6 +368,18 @@
         if (/银行|支行|开户|额度|金额|限额|RMB|人民币/i.test(cleaned)) continue;
         const name = firstChineseName(cleaned);
         if (name) return name;
+      }
+      return "";
+    }
+
+    function findInlineNameBeforeBank(text) {
+      const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
+      for (const line of lines) {
+        const bankIndex = line.search(/(?:银行|信用社|农商行|农信)/);
+        if (bankIndex <= 0) continue;
+        const beforeBank = line.slice(0, bankIndex).trim();
+        const separated = beforeBank.match(/^([\u4e00-\u9fa5·]{2,8})\s+[\u4e00-\u9fa5·]{1,8}$/);
+        if (separated) return separated[1];
       }
       return "";
     }
@@ -399,8 +428,9 @@
 
     function stripTrailingNoise(value) {
       return cleanupValue(value)
+        .replace(/^[\u4e00-\u9fa5·]{2,8}\s+(?=(?:[\u4e00-\u9fa5]*)(?:银行|信用社|农商行|农信))/, "")
         .replace(/(额度|金额|限额|安排|入|卡号|账号|户名|姓名|收款人).*$/i, "")
-        .replace(/\d{6,}.*/, "")
+        .replace(/\d{12,}.*/, "")
         .trim();
     }
 

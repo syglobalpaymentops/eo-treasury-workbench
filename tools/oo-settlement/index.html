@@ -235,36 +235,6 @@
       pointer-events: none;
     }
 
-    .summary {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .metric {
-      min-height: 82px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--surface-strong);
-    }
-
-    .metric span {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .metric strong {
-      display: block;
-      margin-top: 7px;
-      font-size: 21px;
-      line-height: 1.2;
-      word-break: break-word;
-    }
-
     .crosscheck {
       margin-top: 14px;
       padding: 12px;
@@ -469,10 +439,6 @@
         grid-template-columns: 1fr;
       }
 
-      .summary {
-        grid-template-columns: 1fr;
-      }
-
       .field-grid,
       .check-list {
         grid-template-columns: 1fr;
@@ -553,16 +519,6 @@
           </div>
         </div>
 
-        <div class="summary">
-          <div class="metric">
-            <span>转U金额</span>
-            <strong id="settlementAmount">0.00</strong>
-          </div>
-          <div class="metric">
-            <span>公式</span>
-            <strong id="formula">0 * 0.9950 * 0.95</strong>
-          </div>
-        </div>
       </section>
 
       <section class="output" aria-label="结算文案">
@@ -615,10 +571,8 @@
       charge: document.querySelector("#charge"),
       wallet: document.querySelector("#wallet"),
       message: document.querySelector("#message"),
-      settlementAmount: document.querySelector("#settlementAmount"),
       copyAmountValue: document.querySelector("#copyAmountValue"),
       copyWalletValue: document.querySelector("#copyWalletValue"),
-      formula: document.querySelector("#formula"),
       status: document.querySelector("#status"),
       source: document.querySelector("#source"),
       mode: document.querySelector("#mode"),
@@ -887,10 +841,8 @@
       const amountFormatted = amountText(amount);
       const rateFormatted = rate.toFixed(4);
 
-      fields.settlementAmount.textContent = settlementFormatted;
       fields.copyAmountValue.textContent = settlementFormatted;
       fields.copyWalletValue.textContent = fields.wallet.value.trim() || "-";
-      fields.formula.textContent = `${amountFormatted} * ${rateFormatted} * ${multiplier.toFixed(2)}`;
       fields.message.value = `------------------------
 【客户 - ${fields.customer.value.trim()} 】
 
@@ -968,13 +920,13 @@ ${fields.wallet.value.trim()}
       build();
       const values = {
         text: fields.message.value,
-        amount: fields.settlementAmount.textContent,
+        amount: fields.copyAmountValue.textContent,
         wallet: fields.wallet.value.trim(),
       };
 
       try {
         await navigator.clipboard.writeText(values[kind]);
-        const labels = { text: "全文", amount: "转U金额", wallet: "钱包地址" };
+        const labels = { text: "全文", amount: "转账金额", wallet: "钱包地址" };
         setStatus(`已复制${labels[kind]}。`);
       } catch {
         fields.message.focus();
