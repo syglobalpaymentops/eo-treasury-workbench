@@ -78,6 +78,28 @@
             <h3>工作台</h3>
           </div>
 
+          <section class="rate-calculator" aria-label="Profit rate calculator">
+            <div>
+              <p class="eyebrow">Calculator</p>
+              <h3>利润率计算器</h3>
+            </div>
+            <div class="rate-fields">
+              <label>
+                成本汇率
+                <input id="cost-rate" inputmode="decimal" placeholder="例如 6.7800" />
+              </label>
+              <label>
+                客户汇率
+                <input id="client-rate" inputmode="decimal" placeholder="例如 6.8200" />
+              </label>
+            </div>
+            <div class="rate-result">
+              <span>利润率</span>
+              <strong id="profit-rate">-</strong>
+              <small id="rate-spread">等待输入</small>
+            </div>
+          </section>
+
           <div class="tool-grid" aria-label="Available tools">
             <button class="tool-card" type="button" data-src="./tools/payment-instruction-generator.html">
               <span>Payment Instruction</span>

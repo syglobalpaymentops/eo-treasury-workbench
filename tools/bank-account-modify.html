@@ -435,12 +435,12 @@
     }
 
     function findLimit(text, card) {
+      const moneyContext = text.match(/(?:额度|金额|限额|安排|入|RMB|人民币|¥)\s*[:：]?\s*([A-Za-z¥￥\d,.，万wW\s]+)/i);
+      if (moneyContext) return parseMoney(moneyContext[1]);
+
       const labeled = afterLabel(text, ["额度", "授信额度", "金额", "限额", "可用额度", "安排", "入"]);
       const fromLabel = parseMoney(labeled);
       if (fromLabel) return fromLabel;
-
-      const moneyContext = text.match(/(?:额度|金额|限额|安排|入|RMB|人民币|¥)\s*[:：]?\s*([A-Za-z¥￥\d,.，万wW\s]+)/i);
-      if (moneyContext) return parseMoney(moneyContext[1]);
 
       const moneyLine = text
         .split(/\n+/)
