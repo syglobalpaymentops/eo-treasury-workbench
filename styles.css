@@ -210,28 +210,42 @@ a {
   line-height: 1.7;
 }
 
+.home-dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 16px;
+  align-items: start;
+  max-width: 1180px;
+}
+
 .rate-calculator {
   display: grid;
-  grid-template-columns: minmax(180px, 0.8fr) minmax(320px, 1.2fr) minmax(180px, 0.7fr);
-  max-width: 980px;
-  align-items: end;
   gap: 16px;
-  margin-bottom: 18px;
+  position: sticky;
+  top: 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--panel);
+  background:
+    linear-gradient(180deg, rgba(23, 107, 90, 0.06), rgba(255, 255, 255, 0) 42%),
+    var(--panel);
   box-shadow: var(--shadow);
-  padding: 18px;
+  padding: 20px;
 }
 
 .rate-calculator h3 {
   margin: 0;
-  font-size: 22px;
+  font-size: 24px;
+}
+
+.rate-calculator p:not(.eyebrow) {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .rate-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -261,14 +275,14 @@ a {
 }
 
 .rate-result {
-  min-height: 76px;
+  min-height: 104px;
   display: grid;
   align-content: center;
-  gap: 5px;
+  gap: 8px;
   border: 1px solid rgba(23, 107, 90, 0.2);
   border-radius: 8px;
   background: var(--panel-soft);
-  padding: 12px 14px;
+  padding: 16px;
 }
 
 .rate-result span,
@@ -279,7 +293,7 @@ a {
 }
 
 .rate-result strong {
-  font-size: 28px;
+  font-size: 34px;
   line-height: 1;
 }
 
@@ -287,7 +301,6 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
-  max-width: 980px;
 }
 
 .tool-card[data-src="./tools/fx-calculator.html"] {
@@ -416,11 +429,16 @@ iframe {
     justify-content: flex-start;
   }
 
-  .tool-grid {
+  .home-dashboard,
+  .rate-calculator {
     grid-template-columns: 1fr;
   }
 
   .rate-calculator {
+    position: static;
+  }
+
+  .tool-grid {
     grid-template-columns: 1fr;
   }
 

@@ -78,54 +78,57 @@
             <h3>工作台</h3>
           </div>
 
-          <section class="rate-calculator" aria-label="Profit rate calculator">
-            <div>
-              <p class="eyebrow">Calculator</p>
-              <h3>利润率计算器</h3>
+          <div class="home-dashboard">
+            <div class="tool-grid" aria-label="Available tools">
+              <button class="tool-card" type="button" data-src="./tools/payment-instruction-generator.html">
+                <span>Payment Instruction</span>
+                <strong>付款指令生成</strong>
+                <small>生成付款相关文本和表单内容</small>
+              </button>
+              <button class="tool-card" type="button" data-src="./tools/fx-calculator.html">
+                <span>FX Calculator</span>
+                <strong>汇率计算器</strong>
+                <small>报价</small>
+              </button>
+              <button class="tool-card" type="button" data-src="./tools/bank-account-modify.html">
+                <span>Bank Account Modify</span>
+                <strong>银行账户修改</strong>
+                <small>整理账户修改所需信息</small>
+              </button>
+              <button class="tool-card" type="button" data-src="./apps/commission/index.html">
+                <span>Commission Settlement</span>
+                <strong>佣金结算</strong>
+                <small>现有 React 应用的静态版本</small>
+              </button>
+              <button class="tool-card" type="button" data-src="./tools/oo-settlement/index.html">
+                <span>OO Settlement</span>
+                <strong>OO 业务结算</strong>
+                <small>OTC Settlement</small>
+              </button>
             </div>
-            <div class="rate-fields">
-              <label>
-                成本汇率
-                <input id="cost-rate" inputmode="decimal" placeholder="例如 6.7800" />
-              </label>
-              <label>
-                客户汇率
-                <input id="client-rate" inputmode="decimal" placeholder="例如 6.8200" />
-              </label>
-            </div>
-            <div class="rate-result">
-              <span>利润率</span>
-              <strong id="profit-rate">-</strong>
-              <small id="rate-spread">等待输入</small>
-            </div>
-          </section>
 
-          <div class="tool-grid" aria-label="Available tools">
-            <button class="tool-card" type="button" data-src="./tools/payment-instruction-generator.html">
-              <span>Payment Instruction</span>
-              <strong>付款指令生成</strong>
-              <small>生成付款相关文本和表单内容</small>
-            </button>
-            <button class="tool-card" type="button" data-src="./tools/fx-calculator.html">
-              <span>FX Calculator</span>
-              <strong>汇率计算器</strong>
-              <small>报价</small>
-            </button>
-            <button class="tool-card" type="button" data-src="./tools/bank-account-modify.html">
-              <span>Bank Account Modify</span>
-              <strong>银行账户修改</strong>
-              <small>整理账户修改所需信息</small>
-            </button>
-            <button class="tool-card" type="button" data-src="./apps/commission/index.html">
-              <span>Commission Settlement</span>
-              <strong>佣金结算</strong>
-              <small>现有 React 应用的静态版本</small>
-            </button>
-            <button class="tool-card" type="button" data-src="./tools/oo-settlement/index.html">
-              <span>OO Settlement</span>
-              <strong>OO 业务结算</strong>
-              <small>OTC Settlement</small>
-            </button>
+            <section class="rate-calculator" aria-label="Profit rate calculator">
+              <div>
+                <p class="eyebrow">Calculator</p>
+                <h3>利润率计算器</h3>
+                <p>输入成本汇率和客户汇率，快速查看差价和利润率。</p>
+              </div>
+              <div class="rate-fields">
+                <label>
+                  成本汇率
+                  <input id="cost-rate" inputmode="decimal" placeholder="例如 6.7800" />
+                </label>
+                <label>
+                  客户汇率
+                  <input id="client-rate" inputmode="decimal" placeholder="例如 6.8200" />
+                </label>
+              </div>
+              <div class="rate-result">
+                <span>利润率</span>
+                <strong id="profit-rate">-</strong>
+                <small id="rate-spread">等待输入</small>
+              </div>
+            </section>
           </div>
         </section>
 
