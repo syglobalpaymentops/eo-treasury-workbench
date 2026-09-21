@@ -658,7 +658,11 @@
             const lpRate = usdaud * (1 - l);
             // 写入新的强调版样式结构
             document.getElementById('lp-hint').innerHTML = `LP Rate: <span>${lpRate.toFixed(4)}</span> &nbsp;|&nbsp; A/U: <span>${(1/lpRate).toFixed(4)}</span>`;
-            if (u) nppCost = (u / lpRate).toFixed(4);
+            if (u) {
+                const audCost = u / lpRate;
+                nppCost = audCost.toFixed(4);
+                document.getElementById('v-aoren').value = (audCost * 0.98).toFixed(4);
+            }
         } else {
             document.getElementById('lp-hint').innerHTML = `LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>`;
         }
