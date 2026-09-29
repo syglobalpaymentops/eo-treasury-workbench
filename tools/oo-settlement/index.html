@@ -307,6 +307,35 @@
       margin-bottom: 12px;
     }
 
+    .workflow-stack {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .workflow-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .workflow-row span {
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .workflow-row.compact span {
+      font-size: 16px;
+    }
+
     .message-bar {
       display: flex;
       align-items: center;
@@ -532,7 +561,12 @@
         <div class="message-block">
           <div class="message-bar">
             <span>生成的文本</span>
-            <button type="button" data-copy="text">复制全文</button>
+          </div>
+          <div class="workflow-stack" aria-label="OTC workflow copy shortcuts">
+            <div class="workflow-row">
+              <span id="workflowStartText"></span>
+              <button type="button" class="secondary" data-copy="workflowStart">复制</button>
+            </div>
           </div>
           <textarea id="message" spellcheck="false"></textarea>
         </div>
@@ -553,6 +587,20 @@
             <button type="button" class="secondary" data-copy="amount">复制</button>
           </div>
         </div>
+        <div class="workflow-stack" aria-label="Transfer workflow copy shortcuts">
+          <div class="workflow-row compact">
+            <span id="transferStartText">转账开始</span>
+            <button type="button" class="secondary" data-copy="transferStart">复制</button>
+          </div>
+          <div class="workflow-row compact">
+            <span id="transferDoneText">转账完成</span>
+            <button type="button" class="secondary" data-copy="transferDone">复制</button>
+          </div>
+          <div class="workflow-row">
+            <span id="workflowDoneText"></span>
+            <button type="button" class="secondary" data-copy="workflowDone">复制</button>
+          </div>
+        </div>
         <div class="status" id="status" role="status" aria-live="polite"></div>
       </section>
     </div>
@@ -571,6 +619,10 @@
       charge: document.querySelector("#charge"),
       wallet: document.querySelector("#wallet"),
       message: document.querySelector("#message"),
+      workflowStartText: document.querySelector("#workflowStartText"),
+      workflowDoneText: document.querySelector("#workflowDoneText"),
+      transferStartText: document.querySelector("#transferStartText"),
+      transferDoneText: document.querySelector("#transferDoneText"),
       copyAmountValue: document.querySelector("#copyAmountValue"),
       copyWalletValue: document.querySelector("#copyWalletValue"),
       status: document.querySelector("#status"),
@@ -599,6 +651,22 @@
     const amountText = (value) => value.toLocaleString("en-US", {
       maximumFractionDigits: 2,
     });
+
+    function todayStamp() {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = now.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    function workflowStartText() {
+      return `--- ${todayStamp()} OTC业务结算开始 ---`;
+    }
+
+    function workflowDoneText() {
+      return `--- ${todayStamp()} OTC业务结算完成 ---`;
+    }
 
     function setStatus(text, error = false) {
       fields.status.textContent = text;
@@ -841,6 +909,8 @@
       const amountFormatted = amountText(amount);
       const rateFormatted = rate.toFixed(4);
 
+      fields.workflowStartText.textContent = workflowStartText();
+      fields.workflowDoneText.textContent = workflowDoneText();
       fields.copyAmountValue.textContent = settlementFormatted;
       fields.copyWalletValue.textContent = fields.wallet.value.trim() || "-";
       fields.message.value = `------------------------
@@ -920,13 +990,25 @@ ${fields.wallet.value.trim()}
       build();
       const values = {
         text: fields.message.value,
+        workflowStart: workflowStartText(),
+        transferStart: fields.transferStartText.textContent,
+        transferDone: fields.transferDoneText.textContent,
+        workflowDone: workflowDoneText(),
         amount: fields.copyAmountValue.textContent,
         wallet: fields.wallet.value.trim(),
       };
 
       try {
         await navigator.clipboard.writeText(values[kind]);
-        const labels = { text: "全文", amount: "转账金额", wallet: "钱包地址" };
+        const labels = {
+          text: "文案",
+          workflowStart: "开始语",
+          transferStart: "转账开始",
+          transferDone: "转账完成",
+          workflowDone: "完成语",
+          amount: "转账金额",
+          wallet: "钱包地址",
+        };
         setStatus(`已复制${labels[kind]}。`);
       } catch {
         fields.message.focus();
