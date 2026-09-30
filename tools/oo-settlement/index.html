@@ -351,6 +351,21 @@
       text-transform: uppercase;
     }
 
+    .message-editor {
+      position: relative;
+    }
+
+    .message-editor textarea {
+      padding-right: 104px;
+    }
+
+    .message-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1;
+    }
+
     .copy-panels {
       display: grid;
       grid-template-columns: 1fr;
@@ -568,7 +583,10 @@
               <button type="button" class="secondary" data-copy="workflowStart">复制</button>
             </div>
           </div>
-          <textarea id="message" spellcheck="false"></textarea>
+          <div class="message-editor">
+            <button type="button" class="secondary message-copy" data-copy="text">复制</button>
+            <textarea id="message" spellcheck="false"></textarea>
+          </div>
         </div>
 
         <div class="copy-panels">
