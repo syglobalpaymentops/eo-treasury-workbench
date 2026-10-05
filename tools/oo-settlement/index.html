@@ -296,6 +296,37 @@
       color: var(--muted);
     }
 
+    .psp-check {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #cfe7df;
+      border-radius: 8px;
+      background: #f2faf7;
+    }
+
+    .psp-check span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .psp-check strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--ink);
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    .psp-check small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -563,6 +594,12 @@
           </div>
         </div>
 
+        <div class="psp-check" aria-label="PSP 结算U核对">
+          <span>PSP 结算U</span>
+          <strong id="pspSettlementValue">0.00</strong>
+          <small>USD 金额 * 0.99 * 0.9975</small>
+        </div>
+
       </section>
 
       <section class="output" aria-label="结算文案">
@@ -643,6 +680,7 @@
       transferDoneText: document.querySelector("#transferDoneText"),
       copyAmountValue: document.querySelector("#copyAmountValue"),
       copyWalletValue: document.querySelector("#copyWalletValue"),
+      pspSettlementValue: document.querySelector("#pspSettlementValue"),
       status: document.querySelector("#status"),
       source: document.querySelector("#source"),
       mode: document.querySelector("#mode"),
@@ -923,7 +961,9 @@
       const charge = parseNumber(fields.charge.value);
       const multiplier = 1 - charge / 100;
       const settlement = amount * rate * multiplier;
+      const pspSettlement = amount * 0.99 * 0.9975;
       const settlementFormatted = money(settlement);
+      const pspSettlementFormatted = money(pspSettlement);
       const amountFormatted = amountText(amount);
       const rateFormatted = rate.toFixed(4);
 
@@ -931,6 +971,7 @@
       fields.workflowDoneText.textContent = workflowDoneText();
       fields.copyAmountValue.textContent = settlementFormatted;
       fields.copyWalletValue.textContent = fields.wallet.value.trim() || "-";
+      fields.pspSettlementValue.textContent = pspSettlementFormatted;
       fields.message.value = `------------------------
 【客户 - ${fields.customer.value.trim()} 】
 
