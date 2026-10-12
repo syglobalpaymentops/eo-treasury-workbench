@@ -27,6 +27,11 @@
       box-sizing: border-box;
     }
 
+    [hidden] { display: none !important; }
+    .wave-selector { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .wave-selector button { padding: 9px 4px; font-size: 14px; }
+    .wave-selector button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+    button:disabled { opacity: 0.45; cursor: default; }
     body {
       margin: 0;
       min-height: 100vh;
@@ -201,7 +206,8 @@
       font-weight: 700;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       height: 40px;
       margin-top: 6px;
@@ -213,7 +219,8 @@
       background: var(--surface);
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       outline: 2px solid rgba(19, 111, 99, 0.25);
       border-color: var(--accent);
     }
@@ -565,12 +572,23 @@
             <input id="customer" value="">
           </label>
 
-          <label for="amount">USD 金额
+          <label for="currency">币种
+            <select id="currency">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </label>
+
+          <label for="amount"><span id="amountLabel">USD 金额</span>
             <input id="amount" inputmode="decimal" value="">
           </label>
 
-          <label for="rate">USD to USDT 汇率
+          <label for="rate" id="rateField"><span id="rateLabel">USD to USDT 汇率</span>
             <input id="rate" inputmode="decimal" value="0.9950">
+          </label>
+
+          <label for="pspRate" id="pspRateField" hidden>PSP Rate
+            <input id="pspRate" inputmode="decimal" placeholder="例如 1.1197" value="">
           </label>
 
           <label class="input-suffix" for="charge">Bank charges
@@ -596,8 +614,8 @@
 
         <div class="psp-check" aria-label="PSP 结算U核对">
           <span>PSP 结算U</span>
-          <strong id="pspSettlementValue">0.00</strong>
-          <small>USD 金额 * 0.99 * 0.9975</small>
+          <strong id="pspSettlementValue">-</strong>
+          <small id="pspFormulaText" hidden></small>
         </div>
 
       </section>
@@ -615,6 +633,12 @@
             <span>生成的文本</span>
           </div>
           <div class="workflow-stack" aria-label="OTC workflow copy shortcuts">
+            <div class="wave-selector" role="group" aria-label="结算批次">
+              <button type="button" class="secondary" data-wave="第一波" aria-pressed="true">第一波</button>
+              <button type="button" class="secondary" data-wave="第二波" aria-pressed="false">第二波</button>
+              <button type="button" class="secondary" data-wave="第三波" aria-pressed="false">第三波</button>
+              <button type="button" class="secondary" data-wave="第四波" aria-pressed="false">第四波</button>
+            </div>
             <div class="workflow-row">
               <span id="workflowStartText"></span>
               <button type="button" class="secondary" data-copy="workflowStart">复制</button>
@@ -669,8 +693,13 @@
 
     const fields = {
       customer: document.querySelector("#customer"),
+      currency: document.querySelector("#currency"),
       amount: document.querySelector("#amount"),
-      rate: document.querySelector("#rate"),
+      amountLabel: document.querySelector("#amountLabel"),
+      rate: document.querySelector("#rate"), rateField: document.querySelector("#rateField"),
+      rateLabel: document.querySelector("#rateLabel"),
+      pspRate: document.querySelector("#pspRate"),
+      pspRateField: document.querySelector("#pspRateField"),
       charge: document.querySelector("#charge"),
       wallet: document.querySelector("#wallet"),
       message: document.querySelector("#message"),
@@ -681,6 +710,7 @@
       copyAmountValue: document.querySelector("#copyAmountValue"),
       copyWalletValue: document.querySelector("#copyWalletValue"),
       pspSettlementValue: document.querySelector("#pspSettlementValue"),
+      pspFormulaText: document.querySelector("#pspFormulaText"),
       status: document.querySelector("#status"),
       source: document.querySelector("#source"),
       mode: document.querySelector("#mode"),
@@ -707,6 +737,40 @@
     const amountText = (value) => value.toLocaleString("en-US", {
       maximumFractionDigits: 2,
     });
+    const supportedCurrencies = new Set(["USD", "EUR"]);
+    let selectedWave = "第一波";
+
+    function detectCurrency(text) {
+      const value = String(text || "");
+      const typeMatch = value.match(/\b(USD|EUR)\s+to\s+USDT\b/i);
+      if (typeMatch) return typeMatch[1].toUpperCase();
+      const currencyMatch = value.match(/(?:^|\n|\|)\s*(?:\*\*)?Currency(?:\*\*)?\s*(?:[:：|\-])?\s*(USD|EUR)\b/i);
+      if (currencyMatch) return currencyMatch[1].toUpperCase();
+      return "";
+    }
+
+    function getCurrency() {
+      const currency = String(fields.currency.value || "USD").toUpperCase();
+      return supportedCurrencies.has(currency) ? currency : "USD";
+    }
+
+    function setCurrency(currency, resetRate = false) {
+      const nextCurrency = supportedCurrencies.has(String(currency).toUpperCase()) ? String(currency).toUpperCase() : "USD";
+      const isEur = nextCurrency === "EUR";
+      fields.currency.value = nextCurrency;
+      fields.amountLabel.textContent = `${nextCurrency} 金额`;
+      fields.rateLabel.textContent = `${nextCurrency} to USDT 汇率`;
+      fields.pspRateField.hidden = !isEur; fields.rateField.hidden = isEur;
+      fields.rate.readOnly = isEur;
+
+      if (resetRate && !isEur) {
+        fields.rate.value = "0.9950";
+        fields.pspRate.value = "";
+      }
+      if (resetRate && isEur) {
+        fields.rate.value = fields.pspRate.value ? (parseNumber(fields.pspRate.value) * 0.995).toFixed(4) : "";
+      }
+    }
 
     function todayStamp() {
       const now = new Date();
@@ -717,11 +781,11 @@
     }
 
     function workflowStartText() {
-      return `--- ${todayStamp()} OTC业务结算开始 ---`;
+      return `--- ${todayStamp()} OTC业务${selectedWave}结算开始 ---`;
     }
 
     function workflowDoneText() {
-      return `--- ${todayStamp()} OTC业务结算完成 ---`;
+      return `--- ${todayStamp()} OTC${selectedWave}业务结算完成 ---`;
     }
 
     function setStatus(text, error = false) {
@@ -758,8 +822,9 @@
     }
 
     function parseReceiptText(text) {
+      const currency = detectCurrency(text) || "USD";
       const customer = captureLineValue(text, ["Name", "Customer", "客户", "客户名"], "([^|\\n]+)");
-      const amount = cleanAmount(captureLineValue(text, ["Amount", "USD Amount", "USD 金额", "金额"], "([A-Z$¥\\s]*[\\d,]+(?:\\.\\d+)?)"));
+      const amount = cleanAmount(captureLineValue(text, ["Amount", `${currency} Amount`, "USD Amount", "EUR Amount", "USD 金额", "EUR 金额", "金额"], "([A-Z$¥€\\s]*[\\d,]+(?:\\.\\d+)?)"));
       const wallet = captureLineValue(text, ["Wallet Address", "客户钱包地址", "钱包地址", "Address"], "(T[A-Za-z0-9]{20,})")
         || ((text.match(/\bT[A-Za-z0-9]{20,}\b/) || [])[0] || "");
       const transactionNo = captureLineValue(text, ["Transaction No.", "Transaction No", "Transaction ID", "交易号"], "([^|\\n]+)");
@@ -772,7 +837,7 @@
         throw new Error("无法识别：" + missing.join("、"));
       }
 
-      return { customer, amount, wallet, transactionNo };
+      return { customer, amount, wallet, transactionNo, currency };
     }
 
     async function readPdfText(file) {
@@ -825,16 +890,20 @@
           const label = cleanLabel(cells[index]);
           const value = cleanValue(cells[index + 1] || "");
           if (["customer", "客户", "name", "客户名"].includes(label)) parsed.customer = value;
-          if (["amount", "金额", "usd amount", "usd 金额"].includes(label)) parsed.amount = value;
+          if (["amount", "金额", "usd amount", "usd 金额", "eur amount", "eur 金额"].includes(label)) parsed.amount = value;
           if (["wallet address", "客户钱包地址", "钱包地址", "address"].includes(label)) parsed.wallet = value;
+          if (["currency", "币种"].includes(label) && supportedCurrencies.has(value.toUpperCase())) parsed.currency = value.toUpperCase();
+          if (["type", "类型"].includes(label)) parsed.currency = detectCurrency(value) || parsed.currency;
         }
       });
+
+      if (!parsed.currency) parsed.currency = detectCurrency(text);
 
       if (!parsed.customer) {
         parsed.customer = captureLineValue(text, ["Customer", "客户", "Name", "客户名"], "([^|\\n]+)");
       }
       if (!parsed.amount) {
-        parsed.amount = captureLineValue(text, ["Amount", "金额", "USD Amount", "USD 金额"], "([\\d,]+(?:\\.\\d+)?)");
+        parsed.amount = captureLineValue(text, ["Amount", "金额", "USD Amount", "USD 金额", "EUR Amount", "EUR 金额"], "([\\d,]+(?:\\.\\d+)?)");
       }
       if (!parsed.wallet) {
         parsed.wallet = captureLineValue(text, ["Wallet Address", "客户钱包地址", "钱包地址", "Address"], "(T[A-Za-z0-9]{20,})");
@@ -864,6 +933,7 @@
     function applySource(data, sourceName) {
       if (data.customer) fields.customer.value = data.customer;
       if (data.amount) fields.amount.value = data.amount;
+      if (data.currency) setCurrency(data.currency, false);
       if (data.wallet) fields.wallet.value = data.wallet;
       fields.source.textContent = sourceName;
       build();
@@ -956,33 +1026,51 @@
     }
 
     function build() {
+      const currency = getCurrency();
+      const isEur = currency === "EUR";
       const amount = parseNumber(fields.amount.value);
-      const rate = parseNumber(fields.rate.value);
+      const manualRate = parseNumber(fields.rate.value);
+      const pspRate = parseNumber(fields.pspRate.value);
       const charge = parseNumber(fields.charge.value);
       const multiplier = 1 - charge / 100;
-      const settlement = amount * rate * multiplier;
-      const pspSettlement = amount * 0.99 * 0.9975;
+      const effectiveRate = isEur ? pspRate * 0.995 : manualRate;
+      const settlement = amount * effectiveRate * multiplier;
+      const pspSettlement = isEur ? amount * 0.996 * pspRate : amount * 0.99 * 0.9975;
       const settlementFormatted = money(settlement);
       const pspSettlementFormatted = money(pspSettlement);
       const amountFormatted = amountText(amount);
-      const rateFormatted = rate.toFixed(4);
+      const rateFormatted = effectiveRate.toFixed(4);
+      const headlineRate = isEur ? rateFormatted : String(manualRate);
 
+      setCurrency(currency, false);
+      if (isEur) fields.rate.value = pspRate ? rateFormatted : "";
       fields.workflowStartText.textContent = workflowStartText();
       fields.workflowDoneText.textContent = workflowDoneText();
-      fields.copyAmountValue.textContent = settlementFormatted;
+      const hasAmount = fields.amount.value.trim() !== "" && Number.isFinite(amount) && amount > 0;
+      const hasRate = Number.isFinite(effectiveRate) && effectiveRate > 0;
+      const canGenerate = hasAmount && hasRate && Boolean(fields.customer.value.trim()) && Boolean(fields.wallet.value.trim());
+      fields.copyAmountValue.textContent = hasAmount && hasRate ? settlementFormatted : "-";
+      document.querySelector('[data-copy="text"]').disabled = !canGenerate;
+      document.querySelector('[data-copy="amount"]').disabled = !(hasAmount && hasRate);
+      document.querySelector('[data-copy="wallet"]').disabled = !fields.wallet.value.trim();
+      fields.message.placeholder = isEur && hasAmount && !hasRate ? "请输入 PSP Rate" : "等待完整结算信息（USD / EUR）";
       fields.copyWalletValue.textContent = fields.wallet.value.trim() || "-";
-      fields.pspSettlementValue.textContent = pspSettlementFormatted;
-      fields.message.value = `------------------------
+      fields.pspSettlementValue.textContent = hasAmount && (!isEur || pspRate > 0) ? pspSettlementFormatted : "-";
+      fields.pspFormulaText.hidden = !hasAmount;
+      fields.pspFormulaText.textContent = hasAmount
+        ? (isEur ? "EUR 金额 * 0.996 * PSP Rate" : "USD 金额 * 0.99 * 0.9975")
+        : "";
+      fields.message.value = canGenerate ? `------------------------
 【客户 - ${fields.customer.value.trim()} 】
 
-今日 USD to USDT 汇率 = ${rate}
+今日 ${currency} to USDT 汇率 = ${headlineRate}
 
 今日实际支付客户金额如下：
 ${amountFormatted} * ${rateFormatted} - ${charge}% bank charges = ${settlementFormatted}
 
 客户钱包地址如下：
 ${fields.wallet.value.trim()}
-------------------------`;
+------------------------` : "";
       updateCrosscheck();
     }
 
@@ -1004,6 +1092,7 @@ ${fields.wallet.value.trim()}
           customer: data.customer || "",
           amount: data.amount || "",
           wallet: data.wallet || "",
+          currency: data.currency || "",
         };
         applySource(sourceData.pdf, `${file.name}${data.transactionNo ? " / 交易号 " + data.transactionNo : ""}`);
         setStatus("已识别并生成文案。");
@@ -1035,7 +1124,9 @@ ${fields.wallet.value.trim()}
       sourceData.text = {};
       fields.customer.value = "";
       fields.amount.value = "";
+      setCurrency("USD", true);
       fields.rate.value = "0.9950";
+      fields.pspRate.value = "";
       fields.charge.value = "5";
       fields.wallet.value = "";
       fields.crossText.value = "";
@@ -1101,12 +1192,26 @@ ${fields.wallet.value.trim()}
     document.querySelectorAll("input").forEach((input) => {
       input.addEventListener("input", build);
     });
+    fields.currency.addEventListener("change", () => {
+      setCurrency(fields.currency.value, true);
+      build();
+    });
+    document.querySelectorAll("[data-wave]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedWave = button.dataset.wave;
+        document.querySelectorAll("[data-wave]").forEach((item) => {
+          item.setAttribute("aria-pressed", String(item.dataset.wave === selectedWave));
+        });
+        build();
+      });
+    });
     fields.crossText.addEventListener("input", handleCrossTextInput);
     fields.parseTextButton.addEventListener("click", handleCrossTextInput);
     document.querySelectorAll("[data-copy]").forEach((button) => {
       button.addEventListener("click", () => copyValue(button.dataset.copy));
     });
 
+    setCurrency("USD", false);
     build();
   </script>
 </body>
