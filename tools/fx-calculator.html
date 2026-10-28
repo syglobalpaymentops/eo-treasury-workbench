@@ -522,7 +522,7 @@
                     </div>
                     <div class="margin-row">
                         <div class="input-group"><label>POBO%</label><input type="text" id="m-pobo" value="0.4" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
-                        <div class="input-group"><label>LP%</label><input type="text" id="m-lp" value="0.25" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
+                        <div class="input-group"><label>LP%</label><input type="text" id="m-lp" value="0.3" oninput="autoUpdate()" onblur="evalStandard(this)"></div>
                         
                         <div class="lp-highlight" id="lp-hint">
                             LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>
@@ -638,7 +638,7 @@
             document.getElementById(id).value = '';
         });
         document.getElementById('m-pobo').value = '0.4';
-        document.getElementById('m-lp').value = '0.25';
+        document.getElementById('m-lp').value = '0.3';
         autoUpdate();
     }
 
