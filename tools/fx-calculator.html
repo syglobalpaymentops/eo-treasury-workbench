@@ -673,13 +673,17 @@
         const txtAoren = document.getElementById('v-aoren').value || '待更新';
 
         document.getElementById('output-box').value = 
-`今日成本指引：
-人美 ${txtRenmei}
-人美POBO ${poboCost}
-人U ${txtRenu}
-人澳成本 ${nppCost}
-港币 ${txtRengang}
-澳人 ${txtAoren}`;
+`今日普通户(非黄金户)成本指引：
+人美贸易公司出款：${txtRenmei}
+人美正常POBO：${poboCost}
+人U：${txtRenu}
+人澳正常出款：${nppCost}
+人港贸易公司出款：${txtRengang}
+澳人：${txtAoren}
+
+*请注意：
+1. 黄金户因账户额度有限且存在实时变动，请在各自的交易群沟通以确认当前额度和价格。
+2. 其他未提及的币种兑换请在各自的交易群沟通，以确认对应成本和价格。`;
     }
 
     function copyResult() {
