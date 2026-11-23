@@ -324,9 +324,10 @@
     }
 
     function extractCardCandidate(value) {
-      const spaced = (value || "").match(/\d{4}(?:[\s-]+\d{4}){2,4}/);
+      // Keep a short final card group, but never absorb an amount such as 300w.
+      const spaced = (value || "").match(/(?:^|\D)(\d{4}(?:[ \t-]+\d{4}){2,3}(?:[ \t-]+\d{1,3}(?!\d|[ \t]*[wW万]))?)(?!\d)/);
       if (spaced) {
-        const digits = spaced[0].replace(/\D/g, "");
+        const digits = spaced[1].replace(/\D/g, "");
         if (digits.length >= 12 && digits.length <= 19) return digits;
       }
 
