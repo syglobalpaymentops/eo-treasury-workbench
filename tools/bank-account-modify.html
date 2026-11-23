@@ -392,7 +392,8 @@
 
     function findBank(text) {
       const lines = text.split(/\n+/).map(line => line.trim()).filter(Boolean);
-      const labeled = afterLabel(text, ["开户网点", "开户银行", "开户行", "支行"]);
+      const bankText = text.replace(/(开户网点|开户银行|开户行)/g, "\n$1");
+      const labeled = afterLabel(bankText, ["开户网点", "开户银行", "开户行", "支行"]);
       if (/银行|信用社|农商行|农信/i.test(labeled)) return stripTrailingNoise(labeled);
       if (/支行|分行/.test(labeled)) {
         const bankPrefix = lines
@@ -431,12 +432,13 @@
       return cleanupValue(value)
         .replace(/^[\u4e00-\u9fa5·]{2,8}\s+(?=(?:[\u4e00-\u9fa5]*)(?:银行|信用社|农商行|农信))/, "")
         .replace(/(额度|金额|限额|安排|入|卡号|账号|户名|姓名|收款人).*$/i, "")
+        .replace(/(?:[¥￥]|RMB|人民币)\s*[:：]?\s*\d.*$/i, "")
         .replace(/\d{12,}.*/, "")
         .trim();
     }
 
     function findLimit(text, card) {
-      const moneyContext = text.match(/(?:额度|金额|限额|安排|入|RMB|人民币|¥)\s*[:：]?\s*([A-Za-z¥￥\d,.，万wW\s]+)/i);
+      const moneyContext = text.match(/(?:额度|金额|限额|安排|入|RMB|人民币|¥|￥)\s*[:：]?\s*([A-Za-z¥￥\d,.，万wW\s]+)/i);
       if (moneyContext) return parseMoney(moneyContext[1]);
 
       const labeled = afterLabel(text, ["额度", "授信额度", "金额", "限额", "可用额度", "安排", "入"]);
