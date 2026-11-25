@@ -206,6 +206,12 @@
             font-size: 16px;
         }
 
+        .summary-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; flex-shrink: 0; margin: 0; padding: 0; border: 0; min-width: 0; }
+        .summary-modes label { position: relative; min-width: 0; cursor: pointer; }
+        .summary-modes input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+        .summary-modes span { display: block; padding: 8px 2px; text-align: center; font-size: 13px; line-height: 1.4; border: 1px solid #dfe4ef; border-radius: 6px; background: #fff; color: #394454; }
+        .summary-modes input:checked + span { background: #eaf0ff; border-color: #2962ff; color: #164bc4; font-weight: 700; }
+        .summary-modes input:focus-visible + span { outline: 2px solid #2962ff; outline-offset: 2px; }
         /* Right Side: Output text */
         .cg-right {
             grid-area: result;
@@ -531,6 +537,11 @@
                 </div>
 
             <div class="cg-right">
+                <fieldset class="summary-modes" aria-label="文案版本">
+                    <label><input type="radio" name="summary-mode" value="standard" checked onchange="autoUpdate()"><span>普通户</span></label>
+                    <label><input type="radio" name="summary-mode" value="gold" onchange="autoUpdate()"><span>黄金户</span></label>
+                    <label><input type="radio" name="summary-mode" value="same" onchange="autoUpdate()"><span>价格一致</span></label>
+                </fieldset>
                 <textarea class="output-area" id="output-box" readonly placeholder="Generated cost summary will appear here."></textarea>
                 <button class="btn-copy" onclick="copyResult()">Copy Result</button>
             </div>
@@ -672,7 +683,7 @@
         const txtRengang = document.getElementById('v-rengang').value || '待更新';
         const txtAoren = document.getElementById('v-aoren').value || '待更新';
 
-        document.getElementById('output-box').value = 
+        const standardSummary = 
 `今日普通户(非黄金户)成本指引：
 人美贸易公司出款：${txtRenmei}
 人美正常POBO：${poboCost}
@@ -684,6 +695,15 @@
 *请注意：
 1. 黄金户因账户额度有限且存在实时变动，请在各自的交易群沟通以确认当前额度和价格。
 2. 其他未提及的币种兑换请在各自的交易群沟通，以确认对应成本和价格。`;
+        const summaries = {
+            standard: standardSummary,
+            gold: `今日黄金户成本指引：
+人美正常POBO：${poboCost}
+人澳正常出款：${nppCost}`,
+            same: '今日黄金户普通户价格一致'
+        };
+        const mode = document.querySelector('input[name="summary-mode"]:checked').value;
+        document.getElementById('output-box').value = summaries[mode];
     }
 
     function copyResult() {
