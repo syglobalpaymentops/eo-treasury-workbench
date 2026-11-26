@@ -672,7 +672,7 @@
             if (u) {
                 const audCost = u / lpRate;
                 nppCost = audCost.toFixed(4);
-                document.getElementById('v-aoren').value = (audCost * 0.98).toFixed(4);
+                document.getElementById('v-aoren').value = (audCost * 0.99).toFixed(4);
             }
         } else {
             document.getElementById('lp-hint').innerHTML = `LP Rate: <span>待更新</span> &nbsp;|&nbsp; A/U: <span>待更新</span>`;
